@@ -4,6 +4,8 @@ import com.ohgiraffers.COZYbe.domain.projects.dto.CreateProjectDTO;
 import com.ohgiraffers.COZYbe.domain.projects.dto.UpdateProjectDTO;
 import com.ohgiraffers.COZYbe.domain.projects.entity.Project;
 import com.ohgiraffers.COZYbe.domain.projects.repository.ProjectRepository;
+import com.ohgiraffers.COZYbe.domain.teams.domain.entity.Team;
+import com.ohgiraffers.COZYbe.domain.teams.domain.repository.TeamRepository;
 import com.ohgiraffers.COZYbe.domain.user.domain.entity.User;
 import com.ohgiraffers.COZYbe.domain.user.domain.repository.UserRepository;
 import jakarta.transaction.Transactional;
@@ -14,6 +16,7 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -22,61 +25,47 @@ public class ProjectService {
 
     private final ProjectRepository projectRepository;
     private final UserRepository userRepository;
+    private final TeamRepository teamRepository;
 
-    public boolean isProjectNameAvailable(String projectName) {
-        return projectRepository.findByProjectName(projectName).isEmpty();
+    public Project getProjectByProjectId(UUID projectId) {
+        return projectRepository.findByProjectId(projectId)
+                .orElseThrow(() -> new IllegalArgumentException("Project not found: " + projectId));
     }
 
-    // ProjectService#createProject
-    public Project createProject(CreateProjectDTO dto, String userId) {
-        User user = findUserById(userId);
+    public boolean isProjectNameAvailable(String projectName) {
+        return !projectRepository.existsByProjectName(projectName);
+    }
 
+
+    public Project createProject(CreateProjectDTO dto) {
+        System.out.println("서비스dto ::" + dto);
+        UUID teamIdUUID = UUID.fromString(dto.getTeamId());
         Project project = Project.builder()
                 .projectName(dto.getProjectName())
                 .devInterest(dto.getDevInterest())
                 .description(dto.getDescription())
                 .leaderName(dto.getLeaderName())
-                .gitHubUrl(dto.getGitHubUrl())
-                .owner(user)
+                .gitHubUrl(dto.getGithubUrl())
+                .teamId(teamIdUUID)
                 .build();
-
-
         return projectRepository.save(project);
     }
 
 
-
-
-    public Project getProjectByUserId(String userId) {
-        User user = findUserById(userId);
-
-        return projectRepository.findFirstByOwner(user)
-                .orElseThrow(() -> new RuntimeException("프로젝트가 없습니다."));
+    public List<Project> getProjectsByTeamId(UUID teamId) {
+        return projectRepository.findAllByTeamId(teamId);
     }
 
     public Project getProjectByNameForUser(String projectName, String userId) {
         Project project = projectRepository.findByProjectName(projectName)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "프로젝트를 찾을 수 없습니다."));
-        if (!project.getOwner().getUserId().toString().equals(userId)) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "본인의 프로젝트만 조회할 수 있습니다.");
-        }
         return project;
-    }
-
-    private User findUserById(String userId) {
-        return userRepository.findById(UUID.fromString(userId))
-                .orElseThrow(() -> new UsernameNotFoundException("User not found with id: " + userId));
     }
 
     @Transactional
     public void deleteProject(Long projectId, String userId) {
         Project project = projectRepository.findById(projectId)
                 .orElseThrow(() -> new RuntimeException("Not found with id: " + projectId));
-
-        if (!project.getOwner().getUserId().toString().equals(userId)) {
-            throw new AccessDeniedException("You are not the owner of this project.");
-        }
-
         projectRepository.delete(project);
     }
 
@@ -86,10 +75,6 @@ public class ProjectService {
     public Project updateProject(UpdateProjectDTO dto, Long projectId, String userId) {
         Project p = projectRepository.findById(projectId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "프로젝트를 찾을 수 없습니다."));
-
-        if (!p.getOwner().getUserId().toString().equals(userId)) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "본인의 프로젝트만 수정할 수 있습니다.");
-        }
 
         p.setProjectName(dto.getProjectName());
         p.setDevInterest(dto.getDevInterest());
@@ -104,9 +89,6 @@ public class ProjectService {
     public Project getProjectDetailForUser(String projectName, String userId) {
         Project project = projectRepository.findByProjectName(projectName)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "프로젝트를 찾을 수 없습니다."));
-        if (!project.getOwner().getUserId().toString().equals(userId)) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "본인의 프로젝트만 조회할 수 있습니다.");
-        }
         return project;
     }
 
