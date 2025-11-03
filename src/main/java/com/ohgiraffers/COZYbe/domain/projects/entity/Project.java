@@ -36,9 +36,17 @@ public class Project extends BaseTimeEntity {
     @Column(name = "gitHubUrl", nullable = true, length = 800)
     private String gitHubUrl;
 
-    @Column(name = "team_id", columnDefinition = "BINARY(16)", nullable = false)
-    private UUID teamId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "teamid", nullable = false)
+    private Team team;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "leader", nullable = false)
+    private User leader;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "subLeader")
+    private User subLeader;
 
 //    @OneToMany(
 //            mappedBy = "project",

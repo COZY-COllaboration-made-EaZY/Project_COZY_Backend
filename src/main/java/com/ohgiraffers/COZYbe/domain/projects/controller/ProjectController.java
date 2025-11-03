@@ -1,6 +1,7 @@
 package com.ohgiraffers.COZYbe.domain.projects.controller;
 import com.ohgiraffers.COZYbe.domain.projects.dto.CreateProjectDTO;
 import com.ohgiraffers.COZYbe.domain.projects.dto.ProjectDetailResponse;
+import com.ohgiraffers.COZYbe.domain.projects.dto.ProjectListItemResponse;
 import com.ohgiraffers.COZYbe.domain.projects.entity.Project;
 import com.ohgiraffers.COZYbe.domain.projects.service.ProjectService;
 import com.ohgiraffers.COZYbe.jwt.JwtTokenProvider;
@@ -21,7 +22,9 @@ public class ProjectController {
 
     private static final Logger log = LoggerFactory.getLogger(ProjectController.class);
     private final ProjectService projectService;
+    private final JwtTokenProvider jwtTokenProvider;
 
+    //중복확인
     @GetMapping("/check-project-name")
     public ResponseEntity<?> checkProjectName(@RequestParam String projectName) {
         System.out.println("projectName :: " + projectName);
@@ -29,18 +32,27 @@ public class ProjectController {
         return ResponseEntity.ok(Map.of("available", available));
     }
 
+
     @PostMapping("/project-create")
-    public ResponseEntity<?> createProject(@RequestBody CreateProjectDTO dto) {
-        Project project = projectService.createProject(dto);
+    public ResponseEntity<?> createProject(
+            @RequestHeader("Authorization") String authorization,
+            @RequestBody CreateProjectDTO dto
+    ) {
+        System.out.println("dto :: " + dto.toString());
+        String token = jwtTokenProvider.extractToken(authorization);
+        UUID currentUserId = UUID.fromString(jwtTokenProvider.decodeUserIdFromJwt(token));
+
+        Project project = projectService.createProject(dto, currentUserId, false);
         return ResponseEntity.ok(Map.of(
                 "id", project.getProjectId(),
                 "projectName", project.getProjectName()
         ));
     }
 
+    // 팀의 프로젝트 리스트
     @GetMapping("/my-team-project-list")
     public ResponseEntity<?> getMyProjectInfo(@RequestParam UUID teamId) {
-        List<Project> projects = projectService.getProjectsByTeamId(teamId);
+        List<ProjectListItemResponse> projects = projectService.getProjectsByTeamId(teamId);
         return ResponseEntity.ok(Map.of(
                 "teamId", teamId,
                 "hasProject", !projects.isEmpty(),
@@ -49,16 +61,11 @@ public class ProjectController {
         ));
     }
 
+    // 프로젝트 상세
     @GetMapping("/project-detail-info")
     public ResponseEntity<ProjectDetailResponse> getProjectDetailInfo(@RequestParam UUID projectId) {
-        System.out.println("projectId :: " + projectId);
-        var p = projectService.getProjectByProjectId(projectId);
-        System.out.println("projectName :: " + p.getProjectName());
-        var body = new ProjectDetailResponse(
-                p.getProjectId(), p.getProjectName(), p.getDescription(), p.getLeaderName(),
-                p.getGitHubUrl(), p.getTeamId(), p.getCreatedAt(), p.getUpdatedDate()
-        );
-        return ResponseEntity.ok(body);
+        ProjectDetailResponse dto = projectService.getProjectDetailInfo(projectId);
+        return ResponseEntity.ok(dto);
     }
 
 //    @DeleteMapping("/{projectId}")

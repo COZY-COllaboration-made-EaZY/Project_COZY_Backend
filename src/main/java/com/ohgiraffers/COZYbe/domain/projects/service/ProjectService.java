@@ -1,6 +1,8 @@
 package com.ohgiraffers.COZYbe.domain.projects.service;
 
 import com.ohgiraffers.COZYbe.domain.projects.dto.CreateProjectDTO;
+import com.ohgiraffers.COZYbe.domain.projects.dto.ProjectDetailResponse;
+import com.ohgiraffers.COZYbe.domain.projects.dto.ProjectListItemResponse;
 import com.ohgiraffers.COZYbe.domain.projects.dto.UpdateProjectDTO;
 import com.ohgiraffers.COZYbe.domain.projects.entity.Project;
 import com.ohgiraffers.COZYbe.domain.projects.repository.ProjectRepository;
@@ -36,60 +38,107 @@ public class ProjectService {
         return !projectRepository.existsByProjectName(projectName);
     }
 
-
-    public Project createProject(CreateProjectDTO dto) {
-        System.out.println("서비스dto ::" + dto);
+    // 팀장만 프로젝트를 만들수 있게.
+    @Transactional
+    public Project createProject(CreateProjectDTO dto, UUID currentUserId, boolean allowSubLeaderAlso) {
         UUID teamIdUUID = UUID.fromString(dto.getTeamId());
+        Team team = teamRepository.findById(teamIdUUID)
+                .orElseThrow(() -> new IllegalArgumentException("Team not found: " + teamIdUUID));
+        User currentUser = userRepository.findById(currentUserId)
+                .orElseThrow(() -> new IllegalArgumentException("User not found: " + currentUserId));
+        boolean isLeader = team.getLeader() != null && team.getLeader().getUserId().equals(currentUserId);
+        boolean isSubLeader = team.getSubLeader() != null && team.getSubLeader().getUserId().equals(currentUserId);
+        if (!(isLeader || (allowSubLeaderAlso && isSubLeader))){
+            throw new AccessDeniedException("생성권한이 없습니다.");
+        }
+
+        // 부팀장이 있다면 넣고 없으면 null처리
+        User teamSubLeader = team.getSubLeader() != null ? team.getSubLeader() : null;
+
         Project project = Project.builder()
                 .projectName(dto.getProjectName())
                 .devInterest(dto.getDevInterest())
                 .description(dto.getDescription())
                 .leaderName(dto.getLeaderName())
                 .gitHubUrl(dto.getGithubUrl())
-                .teamId(teamIdUUID)
+                .team(team)
+                .leader(currentUser)
+                .subLeader(teamSubLeader) // 서브리더 있으면 넣고 없으면 없음
+                .leaderName(currentUser.getNickname())
                 .build();
         return projectRepository.save(project);
     }
 
+    // 팀의 아이디를 통하여 팀이 만든 프로젝트들을 전부 가져온다.
+    public List<ProjectListItemResponse> getProjectsByTeamId(UUID teamId) {
+        if (!teamRepository.existsById(teamId)){
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Team not found: " + teamId);
+        }
 
-    public List<Project> getProjectsByTeamId(UUID teamId) {
-        return projectRepository.findAllByTeamId(teamId);
+        return projectRepository.findAllByTeam_TeamIdOrderByCreatedAtDesc(teamId).stream()
+                .map(project -> new ProjectListItemResponse(
+                        project.getProjectId(),
+                        project.getProjectName(),
+                        project.getDevInterest(),
+                        project.getDescription(),
+                        project.getLeaderName()
+                )).toList();
+
     }
 
-    public Project getProjectByNameForUser(String projectName, String userId) {
-        Project project = projectRepository.findByProjectName(projectName)
+    // 프로젝트의 아이디를 통하여 프로젝트의 상세 정보를 전부 가져온다.
+    public ProjectDetailResponse getProjectDetailInfo(UUID projectId) {
+        Project p = projectRepository.findWithAllByProjectId(projectId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "프로젝트를 찾을 수 없습니다."));
-        return project;
+
+        return ProjectDetailResponse.builder()
+                .projectId(p.getProjectId())
+                .projectName(p.getProjectName())
+                .devInterest(p.getDevInterest())
+                .description(p.getDescription())
+                .leaderName(p.getLeaderName())
+                .gitHubUrl(p.getGitHubUrl())
+                .teamId(p.getTeam().getTeamId())
+                .leaderId(p.getLeader() != null ? p.getLeader().getUserId() : null)
+                .subLeaderId(p.getSubLeader() != null ? p.getSubLeader().getUserId() : null)
+                .build();
     }
 
     @Transactional
-    public void deleteProject(Long projectId, String userId) {
-        Project project = projectRepository.findById(projectId)
-                .orElseThrow(() -> new RuntimeException("Not found with id: " + projectId));
-        projectRepository.delete(project);
+    public void deleteProject(UUID projectId, UUID currentUserId, boolean allowSubLeaderAlso) {
+        Project p = projectRepository.findByProjectId(projectId)
+                .orElseThrow(() -> new IllegalArgumentException("Not found with id: " + projectId));
+
+        Team team = p.getTeam();
+        boolean isLeader = team.getLeader() != null && team.getLeader().getUserId().equals(currentUserId);
+        boolean isSubLeader = team.getSubLeader() != null && team.getSubLeader().getUserId().equals(currentUserId);
+
+        if (!(isLeader || (allowSubLeaderAlso && isSubLeader))) {
+            throw new AccessDeniedException("프로젝트 삭제 권한이 없습니다.");
+        }
+
+        projectRepository.delete(p);
     }
 
-
-
     @Transactional
-    public Project updateProject(UpdateProjectDTO dto, Long projectId, String userId) {
-        Project p = projectRepository.findById(projectId)
+    public Project updateProject(UpdateProjectDTO dto, UUID projectId, UUID currentUserId, boolean allowSubLeaderAlso) {
+        Project p = projectRepository.findByProjectId(projectId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "프로젝트를 찾을 수 없습니다."));
+
+        Team team = p.getTeam();
+        boolean isLeader = team.getLeader() != null && team.getLeader().getUserId().equals(currentUserId);
+        boolean isSubLeader = team.getSubLeader() != null && team.getSubLeader().getUserId().equals(currentUserId);
+
+        if (!(isLeader || (allowSubLeaderAlso && isSubLeader))) {
+            throw new AccessDeniedException("프로젝트 수정 권한이 없습니다. (팀장/부팀장만 가능)");
+        }
 
         p.setProjectName(dto.getProjectName());
         p.setDevInterest(dto.getDevInterest());
         p.setDescription(dto.getDescription());
         p.setGitHubUrl(dto.getGitHubUrl());
-        if (dto.getLeaderName() != null) p.setLeaderName(dto.getLeaderName());
 
-        return projectRepository.save(p);
-    }
-
-
-    public Project getProjectDetailForUser(String projectName, String userId) {
-        Project project = projectRepository.findByProjectName(projectName)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "프로젝트를 찾을 수 없습니다."));
-        return project;
+        return p;
     }
 
 
