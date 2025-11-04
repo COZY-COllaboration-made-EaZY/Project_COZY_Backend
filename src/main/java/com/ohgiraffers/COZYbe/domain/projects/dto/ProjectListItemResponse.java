@@ -6,6 +6,5 @@ public record ProjectListItemResponse(
         UUID projectId,
         String projectName,
         String devInterest,
-        String description,
-        String leaderName
+        String description
 ) {}

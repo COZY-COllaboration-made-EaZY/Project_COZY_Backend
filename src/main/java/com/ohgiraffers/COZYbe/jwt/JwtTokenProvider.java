@@ -89,17 +89,7 @@ public class JwtTokenProvider {
             throw new ApplicationException(ErrorCode.INVALID_TOKEN);
         }
     }
-
-
-
     public Long getValidTime() {
         return expiration;
-    }
-
-    public String extractToken(String authorizationHeader) {
-        if (authorizationHeader == null || !authorizationHeader.startsWith("Bearer ")) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "No bearer token");
-        }
-        return authorizationHeader.substring(7);
     }
 }

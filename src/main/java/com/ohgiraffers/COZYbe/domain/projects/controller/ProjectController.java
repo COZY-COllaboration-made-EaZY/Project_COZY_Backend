@@ -1,4 +1,5 @@
 package com.ohgiraffers.COZYbe.domain.projects.controller;
+import com.ohgiraffers.COZYbe.domain.auth.service.AuthService;
 import com.ohgiraffers.COZYbe.domain.projects.dto.CreateProjectDTO;
 import com.ohgiraffers.COZYbe.domain.projects.dto.ProjectDetailResponse;
 import com.ohgiraffers.COZYbe.domain.projects.dto.ProjectListItemResponse;
@@ -21,8 +22,9 @@ import java.util.UUID;
 public class ProjectController {
 
     private static final Logger log = LoggerFactory.getLogger(ProjectController.class);
-    private final ProjectService projectService;
     private final JwtTokenProvider jwtTokenProvider;
+    private final AuthService authService;
+    private final ProjectService projectService;
 
     //중복확인
     @GetMapping("/check-project-name")
@@ -38,11 +40,11 @@ public class ProjectController {
             @RequestHeader("Authorization") String authorization,
             @RequestBody CreateProjectDTO dto
     ) {
-        System.out.println("dto :: " + dto.toString());
-        String token = jwtTokenProvider.extractToken(authorization);
-        UUID currentUserId = UUID.fromString(jwtTokenProvider.decodeUserIdFromJwt(token));
+        String token = authorization.replace("Bearer ", "").trim();
+        UUID currentUserId = UUID.fromString(authService.getUserIdFromToken(token));
 
         Project project = projectService.createProject(dto, currentUserId, false);
+
         return ResponseEntity.ok(Map.of(
                 "id", project.getProjectId(),
                 "projectName", project.getProjectName()

@@ -39,22 +39,4 @@ public class Project extends BaseTimeEntity {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "teamid", nullable = false)
     private Team team;
-
-    // 팀장
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "leader", nullable = false)
-    private User leader;
-
-    // 부팀장
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "subLeader")
-    private User subLeader;
-
-//    @OneToMany(
-//            mappedBy = "project",
-//            cascade = CascadeType.REMOVE,
-//            orphanRemoval = true
-//    )
-//    @Builder.Default
-//    private List<Task> tasks = new ArrayList<>();
 }
