@@ -49,7 +49,7 @@ public class TeamAppService {
 
         Team created = domainService.saveTeam(newTeam);
         log.info("팀 생성됨 : {}", created.getTeamName());
-        memberDomainService.createMember(created, userDomainService.getUser(userId));
+        memberDomainService.joinMember(created, userDomainService.getUser(userId));
         return mapper.entityToDetail(created);
     }
 
@@ -102,12 +102,12 @@ public class TeamAppService {
         return new SearchResultDTO(dtoList);
     }
 
-     public SearchResultDTO searchTeamByUser(String userId) {
-      List<UUID> teamIds = memberDomainService.findTeamIdsByUser(userId);
-      List<Team> teams = domainService.getAllById(teamIds);
-      List<TeamNameDTO> dtoList = mapper.entityListToDto(teams);
-      return new SearchResultDTO(dtoList);
-  }
+    public SearchResultDTO searchTeamByUser(String userId) {
+        List<UUID> teamIds = memberDomainService.findTeamIdsByUser(userId);
+        List<Team> teams = domainService.getAllById(teamIds);
+        List<TeamNameDTO> dtoList = mapper.entityListToDto(teams);
+        return new SearchResultDTO(dtoList);
+    }
 
 
     ///*********** Verifier ***********///
