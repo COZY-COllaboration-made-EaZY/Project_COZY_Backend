@@ -1,13 +1,15 @@
 package com.ohgiraffers.COZYbe.domain.projects.entity;
 
 import com.ohgiraffers.COZYbe.common.BaseTimeEntity;
-import com.ohgiraffers.COZYbe.domain.task.entity.Task;
+//import com.ohgiraffers.COZYbe.domain.task.entity.Task;
+import com.ohgiraffers.COZYbe.domain.teams.domain.entity.Team;
 import com.ohgiraffers.COZYbe.domain.user.domain.entity.User;
 import jakarta.persistence.*;
 import lombok.*;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 @Entity
 @Table(name = "tbl_project")
@@ -15,16 +17,12 @@ import java.util.List;
 public class Project extends BaseTimeEntity {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "projectId")
-    private Long projectId;
+    @GeneratedValue
+    @Column(name="project_id", columnDefinition="BINARY(16)")
+    private UUID projectId;
 
     @Column(name = "projectName", nullable = false, unique = true, length = 100)
     private String projectName;
-
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "ownerId", nullable = false)
-    private User owner;
 
     @Column(name = "devInterest", nullable = false, length = 50)
     private String devInterest;
@@ -38,12 +36,7 @@ public class Project extends BaseTimeEntity {
     @Column(name = "gitHubUrl", nullable = true, length = 800)
     private String gitHubUrl;
 
-
-    @OneToMany(
-            mappedBy = "project",
-            cascade = CascadeType.REMOVE,
-            orphanRemoval = true
-    )
-    @Builder.Default
-    private List<Task> tasks = new ArrayList<>();
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "teamid", nullable = false)
+    private Team team;
 }

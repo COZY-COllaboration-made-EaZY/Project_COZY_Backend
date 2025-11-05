@@ -1,9 +1,15 @@
 package com.ohgiraffers.COZYbe.domain.projects.service;
 
+import com.ohgiraffers.COZYbe.common.error.ApplicationException;
 import com.ohgiraffers.COZYbe.domain.projects.dto.CreateProjectDTO;
+import com.ohgiraffers.COZYbe.domain.projects.dto.ProjectDetailResponse;
+import com.ohgiraffers.COZYbe.domain.projects.dto.ProjectListItemResponse;
 import com.ohgiraffers.COZYbe.domain.projects.dto.UpdateProjectDTO;
 import com.ohgiraffers.COZYbe.domain.projects.entity.Project;
 import com.ohgiraffers.COZYbe.domain.projects.repository.ProjectRepository;
+import com.ohgiraffers.COZYbe.domain.teams.domain.entity.Team;
+import com.ohgiraffers.COZYbe.domain.teams.domain.repository.TeamRepository;
+import com.ohgiraffers.COZYbe.domain.teams.domain.service.TeamDomainService;
 import com.ohgiraffers.COZYbe.domain.user.domain.entity.User;
 import com.ohgiraffers.COZYbe.domain.user.domain.repository.UserRepository;
 import jakarta.transaction.Transactional;
@@ -14,7 +20,10 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.util.List;
 import java.util.UUID;
+
+import static com.ohgiraffers.COZYbe.common.error.ErrorCode.ANONYMOUS_USER;
 
 @Service
 @RequiredArgsConstructor
@@ -22,92 +31,111 @@ public class ProjectService {
 
     private final ProjectRepository projectRepository;
     private final UserRepository userRepository;
+    private final TeamRepository teamRepository;
+    private final TeamDomainService teamDomainService;
 
-    public boolean isProjectNameAvailable(String projectName) {
-        return projectRepository.findByProjectName(projectName).isEmpty();
+    public Project getProjectByProjectId(UUID projectId) {
+        return projectRepository.findByProjectId(projectId)
+                .orElseThrow(() -> new IllegalArgumentException("Project not found: " + projectId));
     }
 
-    // ProjectService#createProject
-    public Project createProject(CreateProjectDTO dto, String userId) {
-        User user = findUserById(userId);
+    public boolean isProjectNameAvailable(String projectName) {
+        return !projectRepository.existsByProjectName(projectName);
+    }
+
+    // 팀장만 프로젝트를 만들수 있게.
+    @Transactional
+    public Project createProject(CreateProjectDTO dto, UUID currentUserId, boolean allowSubLeaderAlso) {
+        UUID teamId = UUID.fromString(dto.getTeamId());
+
+        // 팀 조회
+        Team team = teamDomainService.getTeam(teamId);
+
+        // 권한 체크(팀장 or (부팀장 허용시) 부팀장)
+        boolean isLeader = team.getLeader() != null && team.getLeader().getUserId().equals(currentUserId);
+        boolean isSubLeader = team.getSubLeader() != null && team.getSubLeader().getUserId().equals(currentUserId);
+        if (!(isLeader || (allowSubLeaderAlso && isSubLeader))) {
+            throw new ApplicationException(ANONYMOUS_USER);
+        }
 
         Project project = Project.builder()
                 .projectName(dto.getProjectName())
                 .devInterest(dto.getDevInterest())
                 .description(dto.getDescription())
-                .leaderName(dto.getLeaderName())
-                .gitHubUrl(dto.getGitHubUrl())
-                .owner(user)
+                .gitHubUrl(dto.getGithubUrl())
+                .team(team)
                 .build();
-
 
         return projectRepository.save(project);
     }
 
-
-
-
-    public Project getProjectByUserId(String userId) {
-        User user = findUserById(userId);
-
-        return projectRepository.findFirstByOwner(user)
-                .orElseThrow(() -> new RuntimeException("프로젝트가 없습니다."));
-    }
-
-    public Project getProjectByNameForUser(String projectName, String userId) {
-        Project project = projectRepository.findByProjectName(projectName)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "프로젝트를 찾을 수 없습니다."));
-        if (!project.getOwner().getUserId().toString().equals(userId)) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "본인의 프로젝트만 조회할 수 있습니다.");
+    // 팀의 아이디를 통하여 팀이 만든 프로젝트들을 전부 가져온다.
+    public List<ProjectListItemResponse> getProjectsByTeamId(UUID teamId) {
+        if (!teamDomainService.isTeamExist(teamId)) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Team not found: " + teamId);
         }
-        return project;
+
+        return projectRepository.findAllByTeam_TeamIdOrderByCreatedAtDesc(teamId).stream()
+                .map(project -> new ProjectListItemResponse(
+                        project.getProjectId(),
+                        project.getProjectName(),
+                        project.getDevInterest(),
+                        project.getDescription()
+                ))
+                .toList();
+
     }
 
-    private User findUserById(String userId) {
-        return userRepository.findById(UUID.fromString(userId))
-                .orElseThrow(() -> new UsernameNotFoundException("User not found with id: " + userId));
+    // 프로젝트의 아이디를 통하여 프로젝트의 상세 정보를 전부 가져온다.
+    public ProjectDetailResponse getProjectDetailInfo(UUID projectId) {
+        Project p = projectRepository.findWithAllByProjectId(projectId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "프로젝트를 찾을 수 없습니다."));
+
+        return ProjectDetailResponse.builder()
+                .projectId(p.getProjectId())
+                .projectName(p.getProjectName())
+                .devInterest(p.getDevInterest())
+                .description(p.getDescription())
+                .gitHubUrl(p.getGitHubUrl())
+                .teamId(p.getTeam().getTeamId())
+                .build();
     }
 
     @Transactional
-    public void deleteProject(Long projectId, String userId) {
-        Project project = projectRepository.findById(projectId)
-                .orElseThrow(() -> new RuntimeException("Not found with id: " + projectId));
+    public void deleteProject(UUID projectId, UUID currentUserId, boolean allowSubLeaderAlso) {
+        Project p = projectRepository.findByProjectId(projectId)
+                .orElseThrow(() -> new IllegalArgumentException("Not found with id: " + projectId));
 
-        if (!project.getOwner().getUserId().toString().equals(userId)) {
-            throw new AccessDeniedException("You are not the owner of this project.");
+        Team team = p.getTeam();
+        boolean isLeader = team.getLeader() != null && team.getLeader().getUserId().equals(currentUserId);
+        boolean isSubLeader = team.getSubLeader() != null && team.getSubLeader().getUserId().equals(currentUserId);
+
+        if (!(isLeader || (allowSubLeaderAlso && isSubLeader))) {
+            throw new AccessDeniedException("프로젝트 삭제 권한이 없습니다.");
         }
 
-        projectRepository.delete(project);
+        projectRepository.delete(p);
     }
 
-
-
     @Transactional
-    public Project updateProject(UpdateProjectDTO dto, Long projectId, String userId) {
-        Project p = projectRepository.findById(projectId)
+    public Project updateProject(UpdateProjectDTO dto, UUID projectId, UUID currentUserId, boolean allowSubLeaderAlso) {
+        Project p = projectRepository.findByProjectId(projectId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "프로젝트를 찾을 수 없습니다."));
 
-        if (!p.getOwner().getUserId().toString().equals(userId)) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "본인의 프로젝트만 수정할 수 있습니다.");
+        Team team = p.getTeam();
+        boolean isLeader = team.getLeader() != null && team.getLeader().getUserId().equals(currentUserId);
+        boolean isSubLeader = team.getSubLeader() != null && team.getSubLeader().getUserId().equals(currentUserId);
+
+        if (!(isLeader || (allowSubLeaderAlso && isSubLeader))) {
+            throw new AccessDeniedException("프로젝트 수정 권한이 없습니다. (팀장/부팀장만 가능)");
         }
 
         p.setProjectName(dto.getProjectName());
         p.setDevInterest(dto.getDevInterest());
         p.setDescription(dto.getDescription());
         p.setGitHubUrl(dto.getGitHubUrl());
-        if (dto.getLeaderName() != null) p.setLeaderName(dto.getLeaderName());
 
-        return projectRepository.save(p);
-    }
-
-
-    public Project getProjectDetailForUser(String projectName, String userId) {
-        Project project = projectRepository.findByProjectName(projectName)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "프로젝트를 찾을 수 없습니다."));
-        if (!project.getOwner().getUserId().toString().equals(userId)) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "본인의 프로젝트만 조회할 수 있습니다.");
-        }
-        return project;
+        return p;
     }
 
 
