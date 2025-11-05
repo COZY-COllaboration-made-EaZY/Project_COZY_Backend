@@ -3,6 +3,8 @@ package com.ohgiraffers.COZYbe.domain.projects.dto;
 import jakarta.validation.constraints.NotBlank;
 import lombok.*;
 
+import java.util.UUID;
+
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -18,6 +20,8 @@ public class CreateProjectDTO {
     // プロジェクトマスター
     private String leaderName;
     // gitHubUrl
-    private String gitHubUrl;
+    private String githubUrl;
+    // TeamId
+    private String teamId;
 }
 
