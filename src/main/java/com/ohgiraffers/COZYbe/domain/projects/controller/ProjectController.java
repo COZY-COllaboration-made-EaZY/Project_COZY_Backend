@@ -3,30 +3,33 @@ import com.ohgiraffers.COZYbe.domain.auth.service.AuthService;
 import com.ohgiraffers.COZYbe.domain.projects.dto.CreateProjectDTO;
 import com.ohgiraffers.COZYbe.domain.projects.dto.ProjectDetailResponse;
 import com.ohgiraffers.COZYbe.domain.projects.dto.ProjectListItemResponse;
+import com.ohgiraffers.COZYbe.domain.projects.dto.UpdateProjectDTO;
 import com.ohgiraffers.COZYbe.domain.projects.entity.Project;
 import com.ohgiraffers.COZYbe.domain.projects.service.ProjectService;
+import com.ohgiraffers.COZYbe.domain.user.domain.entity.User;
 import com.ohgiraffers.COZYbe.jwt.JwtTokenProvider;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+@Slf4j
 @RestController
 @RequestMapping("/api/project")
 @RequiredArgsConstructor
 public class ProjectController {
 
-    private static final Logger log = LoggerFactory.getLogger(ProjectController.class);
-    private final JwtTokenProvider jwtTokenProvider;
-    private final AuthService authService;
     private final ProjectService projectService;
 
-    //중복확인
+    //프로젝트 중복확인
     @GetMapping("/check-project-name")
     public ResponseEntity<?> checkProjectName(@RequestParam String projectName) {
         System.out.println("projectName :: " + projectName);
@@ -37,14 +40,12 @@ public class ProjectController {
 
     @PostMapping("/project-create")
     public ResponseEntity<?> createProject(
-            @RequestHeader("Authorization") String authorization,
-            @RequestBody CreateProjectDTO dto
+            @AuthenticationPrincipal Jwt jwt, @RequestBody CreateProjectDTO dto
     ) {
-        String token = authorization.replace("Bearer ", "").trim();
-        UUID currentUserId = UUID.fromString(authService.getUserIdFromToken(token));
-
-        Project project = projectService.createProject(dto, currentUserId, false);
-
+        UUID currentUserId = UUID.fromString(jwt.getSubject());
+        System.out.println("currentUserId :: " + currentUserId);
+        Project project = projectService.createProject(dto, currentUserId);
+        log.info("프로젝트 제작 성공");
         return ResponseEntity.ok(Map.of(
                 "id", project.getProjectId(),
                 "projectName", project.getProjectName()
@@ -70,36 +71,30 @@ public class ProjectController {
         return ResponseEntity.ok(dto);
     }
 
-//    @DeleteMapping("/{projectId}")
-//    public ResponseEntity<Void> deleteProject(@PathVariable Long projectId, HttpServletRequest request) {
-//        String auth = request.getHeader("Authorization");
-//        if (auth == null || !auth.startsWith("Bearer ")) {
-//            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-//        }
-//        String token = auth.substring(7);
-//        String userId = jwtTokenProvider.decodeUserIdFromJwt(token);
-//
-//        projectService.deleteProject(projectId, userId);
-//        return ResponseEntity.noContent().build();
-//    }
+    @DeleteMapping("/{projectId}")
+    public ResponseEntity<Void> deleteProject(@PathVariable UUID projectId,
+                                              @AuthenticationPrincipal Jwt jwt) {
+        UUID currentUserId = UUID.fromString(jwt.getSubject());
+        projectService.deleteProject(projectId, currentUserId);
+        return ResponseEntity.noContent().build();
+    }
 
 
-//    @PutMapping("/{projectId}")
-//    public ResponseEntity<?> updateProject(@PathVariable Long projectId,
-//                                           @RequestBody @Valid UpdateProjectDTO dto,
-//                                           HttpServletRequest req) {
-//        String userId = extractUserId(req);
-//        Project p = projectService.updateProject(dto, projectId, userId);
-//        return ResponseEntity.ok(Map.of(
-//                "projectId", p.getProjectId(),
-//                "projectName", p.getProjectName(),
-//                "description", p.getDescription(),
-//                "devInterest", p.getDevInterest(),
-//                "githubUrl", p.getGitHubUrl(),
-//                "ownerName", p.getLeaderName(),
-//                "createdAt", p.getCreatedAt()
-//        ));
-//    }
+    @PutMapping("/{projectId}")
+    public ResponseEntity<?> updateProject(@PathVariable UUID projectId,
+                                           @RequestBody UpdateProjectDTO dto,
+                                           @AuthenticationPrincipal Jwt jwt) {
+        UUID currentUserId = UUID.fromString(jwt.getSubject());
+        Project p = projectService.updateProject(dto, projectId, currentUserId);
+        return ResponseEntity.ok(Map.of(
+                "projectId", p.getProjectId(),
+                "projectName", p.getProjectName(),
+                "description", p.getDescription(),
+                "devInterest", p.getDevInterest(),
+                "githubUrl", p.getGitHubUrl(),
+                "createdAt", p.getCreatedAt()
+        ));
+    }
 
 
 
