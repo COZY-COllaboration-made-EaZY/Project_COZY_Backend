@@ -17,8 +17,6 @@ public class CreateProjectDTO {
     private String devInterest;
     // 프로젝트 설명
     private String description;
-    // プロジェクトマスター
-    private String leaderName;
     // gitHubUrl
     private String githubUrl;
     // TeamId

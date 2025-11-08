@@ -7,13 +7,15 @@ import com.ohgiraffers.COZYbe.domain.user.domain.entity.User;
 import jakarta.persistence.*;
 import lombok.*;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.UUID;
 
 @Entity
 @Table(name = "tbl_project")
-@Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class Project extends BaseTimeEntity {
 
     @Id
@@ -29,9 +31,6 @@ public class Project extends BaseTimeEntity {
 
     @Column(name = "description", nullable = false, length = 500)
     private String description;
-
-    @Column(name = "leader_name", nullable = false, length = 100)
-    private String leaderName;
 
     @Column(name = "gitHubUrl", nullable = true, length = 800)
     private String gitHubUrl;
