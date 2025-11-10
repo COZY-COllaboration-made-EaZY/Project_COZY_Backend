@@ -20,7 +20,11 @@ public enum ErrorCode {
     ANONYMOUS_USER(HttpStatus.UNAUTHORIZED, "AUTH-002", "익명의 유저가 접근하였습니다."),
     NO_SUCH_TEAM(HttpStatus.NOT_FOUND, "TEAM-001", "존재하지 않는 팀."),
     NO_SUCH_MEMBER(HttpStatus.NOT_FOUND, "MEMBER-001", "존재하지 않는 멤버."),
-    NO_SUCH_PROJECT(HttpStatus.NOT_FOUND, "PROJECT-001","존재하지 않는 프로젝트")
+    NO_SUCH_PROJECT(HttpStatus.NOT_FOUND, "PROJECT-001","존재하지 않는 프로젝트"),
+    NO_SUCH_JOIN_REQUEST(HttpStatus.NOT_FOUND, "JOIN-001", "존재하지 않는 가입 요청."),
+    DUPLICATE_JOIN_REQUEST(HttpStatus.CONFLICT, "JOIN-002", "이미 요청한 팀입니다."),
+    ALREADY_TEAM_MEMBER(HttpStatus.CONFLICT, "JOIN-003", "이미 가입한 팀입니다."),
+    REQUEST_ALREADY_PROCESSED(HttpStatus.CONFLICT, "JOIN-004", "이미 처리된 요청입니다.")
     ;
 
     private HttpStatus status;

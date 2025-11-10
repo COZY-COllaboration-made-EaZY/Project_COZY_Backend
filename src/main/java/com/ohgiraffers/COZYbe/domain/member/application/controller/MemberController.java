@@ -16,14 +16,14 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 @RestController
 @RequestMapping("/api/member")
-@Tag(name = "멤버 컨트롤러", description = "멤버와 관련된 api")
+@Tag(name = "멤버", description = "멤버와 관련된 api")
 public class MemberController {
 
     private final MemberAppService service;
 
 
 
-    @Operation(summary = "팀원 조회", description = "")
+    @Operation(summary = "팀원 조회", description = "한 팀의 팀원 리스트 가져오기")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "성공적으로 처리 되었습니다."),
             @ApiResponse(responseCode = "500", description = "예상치 못한 예러")
@@ -36,7 +36,7 @@ public class MemberController {
     }
 
 
-    @Operation(summary = "팀에 가입하기", description = "팀id를 가지고 허가받지 않고 가입. 승인요청 만들고 나서 deprecated 예정")
+    @Operation(summary = "팀에 가입하기", description = "팀id를 가지고 허가받지 않고 가입. 승인요청 만들고 나서 deprecated 예정", deprecated = true)
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "성공적으로 처리 되었습니다."),
             @ApiResponse(responseCode = "500", description = "예상치 못한 예러")
@@ -62,7 +62,7 @@ public class MemberController {
     }
 
 
-    @Operation(summary = "유저가 가입한 팀 조회", description = "타인의 팀 가입 목록 조회")
+    @Operation(summary = "유저가 가입한 팀 조회", description = "타인의 팀 가입 목록 조회", hidden = true)
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "성공적으로 처리 되었습니다."),
             @ApiResponse(responseCode = "500", description = "예상치 못한 예러")

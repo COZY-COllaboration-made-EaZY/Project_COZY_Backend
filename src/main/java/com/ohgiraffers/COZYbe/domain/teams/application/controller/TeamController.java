@@ -9,6 +9,7 @@ import com.ohgiraffers.COZYbe.domain.teams.application.service.TeamAppService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -17,6 +18,7 @@ import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 
 
+@Tag(name = "팀", description = "팀과 관련된 api")
 @Slf4j
 @RequiredArgsConstructor
 @RestController
