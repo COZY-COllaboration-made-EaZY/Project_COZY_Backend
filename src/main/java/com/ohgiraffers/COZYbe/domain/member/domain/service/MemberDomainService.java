@@ -18,11 +18,8 @@ public class MemberDomainService {
 
     private MemberRepository repository;
 
-    public Member createMember(Team team, User user) {
-        return repository.save(Member.builder()
-                .team(team)
-                .user(user)
-                .build());
+    public Member joinMember(Team team, User user) {
+        return repository.save(Member.builder().team(team).user(user).build());
     }
 
     public void deleteMember(String teamId, String userId){

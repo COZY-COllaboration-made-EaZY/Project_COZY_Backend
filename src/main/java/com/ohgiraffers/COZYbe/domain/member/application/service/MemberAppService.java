@@ -5,7 +5,6 @@ import com.ohgiraffers.COZYbe.common.error.ErrorCode;
 import com.ohgiraffers.COZYbe.domain.member.application.dto.response.MemberListDTO;
 import com.ohgiraffers.COZYbe.domain.member.domain.entity.Member;
 import com.ohgiraffers.COZYbe.domain.member.domain.service.MemberDomainService;
-import com.ohgiraffers.COZYbe.domain.teams.application.service.TeamAppService;
 import com.ohgiraffers.COZYbe.domain.teams.domain.service.TeamDomainService;
 import com.ohgiraffers.COZYbe.domain.user.domain.service.UserDomainService;
 import lombok.AllArgsConstructor;
@@ -34,7 +33,7 @@ public class MemberAppService {
     }
 
     public void joinMember(String teamId, String userId) {
-        domainService.createMember(
+        domainService.joinMember(
                 teamDomainService.getReference(teamId),
                 userDomainService.getReference(userId)
         );

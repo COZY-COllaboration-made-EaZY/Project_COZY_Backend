@@ -11,6 +11,7 @@ import java.util.List;
 @Mapper(componentModel = "spring", unmappedTargetPolicy = ReportingPolicy.IGNORE)
 public interface MemberMapper {
 
+    @Mapping(source = "user.userId", target = "userId")
     @Mapping(source = "user.nickname", target = "memberName")
     MemberBriefDTO entityToDto(Member member);
 
