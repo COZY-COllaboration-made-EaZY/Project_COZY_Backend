@@ -177,9 +177,10 @@ public class JoinRequestAppService {
                              team.getSubLeader().getUserId().toString().equals(userId);
 
         if (!isLeader && !isSubLeader) {
+            log.info("Join Request ({}) : 리더급 권한 거절", teamId);
             throw new ApplicationException(ErrorCode.NOT_ALLOWED);
         }
 
-        log.info("리더급 권한 확인");
+        log.info("Join Request ({}) : 리더급 권한 승인", teamId);
     }
 }

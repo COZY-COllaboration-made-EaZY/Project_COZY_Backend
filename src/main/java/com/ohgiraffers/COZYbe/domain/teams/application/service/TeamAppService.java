@@ -2,6 +2,7 @@ package com.ohgiraffers.COZYbe.domain.teams.application.service;
 
 import com.ohgiraffers.COZYbe.common.error.ApplicationException;
 import com.ohgiraffers.COZYbe.common.error.ErrorCode;
+import com.ohgiraffers.COZYbe.domain.member.domain.entity.Member;
 import com.ohgiraffers.COZYbe.domain.member.domain.service.MemberDomainService;
 import com.ohgiraffers.COZYbe.domain.teams.application.dto.request.CreateTeamDTO;
 import com.ohgiraffers.COZYbe.domain.teams.application.dto.request.UpdateSubLeaderDTO;
@@ -58,7 +59,6 @@ public class TeamAppService {
     }
 
     public TeamDetailDTO getTeamDetail(String teamId, String userId) {
-        verifyUser(userId);
 
         Team team = domainService.getTeam(teamId);
         return mapper.entityToDetail(team);
@@ -83,9 +83,9 @@ public class TeamAppService {
 
     public void updateSubLeader(UpdateSubLeaderDTO updateDTO, String leaderId) {
         Team team = getIfLeader(updateDTO.teamId(), leaderId);
-        User newSubLeader = userDomainService.getReference(updateDTO.subLeaderId());
+        Member member = memberDomainService.getMember(updateDTO.teamId(),updateDTO.subLeaderId());
         domainService.saveTeam(team.toBuilder()
-                .subLeader(newSubLeader)
+                .subLeader(member.getUser())
                 .build());
     }
 
@@ -112,15 +112,6 @@ public class TeamAppService {
 
     ///*********** Verifier ***********///
 
-    /**
-     * Jwt 토큰에서 받아온 유저가 유효한지 검사
-     *
-     */
-    private void verifyUser(String userId) {
-        if (!userDomainService.isUserExist(userId)) {
-            throw new ApplicationException(ErrorCode.INVALID_USER);
-        }
-    }
 
 
     /**
@@ -134,8 +125,10 @@ public class TeamAppService {
     private Team getIfLeader(String teamId, String userId) {
         Team team = domainService.getReference(teamId);
         if (team.getLeader().getUserId().toString().equals(userId)) {
+            log.info("team ({}) : 리더 권한 승인", teamId);
             return team;
         }
+        log.info("team ({}) : 리더 권한 거절", teamId);
         throw new ApplicationException(ErrorCode.NOT_ALLOWED);
     }
 
