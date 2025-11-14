@@ -1,44 +1,41 @@
 package com.ohgiraffers.COZYbe.domain.projects.entity;
 
 import com.ohgiraffers.COZYbe.common.BaseTimeEntity;
-import com.ohgiraffers.COZYbe.domain.community.entity.Community;
-import com.ohgiraffers.COZYbe.domain.plan.entity.Plan;
-import com.ohgiraffers.COZYbe.domain.user.entity.User;
+//import com.ohgiraffers.COZYbe.domain.task.entity.Task;
+import com.ohgiraffers.COZYbe.domain.teams.domain.entity.Team;
+import com.ohgiraffers.COZYbe.domain.user.domain.entity.User;
 import jakarta.persistence.*;
 import lombok.*;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.UUID;
 
 @Entity
+@Table(name = "tbl_project")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@Table(name = "tbl_project")
 public class Project extends BaseTimeEntity {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "project_id")
-    private Long projectId;
+    @GeneratedValue
+    @Column(name="project_id", columnDefinition="BINARY(16)")
+    private UUID projectId;
 
-    @Column(name = "project_name", nullable = false, unique = true, length = 100)
+    @Column(name = "projectName", nullable = false, unique = true, length = 100)
     private String projectName;
 
+    @Column(name = "devInterest", nullable = false, length = 50)
+    private String devInterest;
+
+    @Column(name = "description", nullable = false, length = 500)
+    private String description;
+
+    @Column(name = "gitHubUrl", nullable = true, length = 800)
+    private String gitHubUrl;
+
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "owner_id", nullable = false)
-    private User owner;
-
-    @Column(name = "interest", nullable = false, length = 50)
-    private String interest;
-
-    // 프로젝트의 일정
-    @OneToMany(mappedBy = "project", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Plan> plans = new ArrayList<>();
-
-    // 프로젝트의 커뮤니티
-    @OneToMany(mappedBy = "project", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Community> communities = new ArrayList<>();
+    @JoinColumn(name = "teamid", nullable = false)
+    private Team team;
 }

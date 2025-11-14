@@ -47,3 +47,14 @@ springdoc:
     path: /swagger-ui.html
   api-docs:
     path: /v3/api-docs
+
+logging:
+  level:
+    root: info
+    # Hibernate 전체를 낮추고, 특정 카테고리는 더 강하게
+    org.hibernate: warn
+    org.hibernate.orm.deprecation: error
+    org.hibernate.orm.connections.pooling: error  # ← "Database info:" 여기서 나옵니다
+    com.zaxxer.hikari: error                      # HikariCP 시작/연결 로그 숨김
+    org.springframework.boot.autoconfigure.orm.jpa: error # open-in-view 경고 숨김
+

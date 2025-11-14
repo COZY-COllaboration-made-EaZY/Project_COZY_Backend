@@ -1,14 +1,11 @@
 package com.ohgiraffers.COZYbe.domain.teams.domain.repository;
 
 import com.ohgiraffers.COZYbe.domain.teams.domain.entity.Team;
-import org.springframework.data.domain.Page;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import java.awt.print.Pageable;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @Repository
@@ -19,6 +16,7 @@ public interface TeamRepository extends JpaRepository<Team, UUID> {
     List<Team> findByTeamNameContainingIgnoreCase(String searchKeyword);
 
 
-    List<Team> findByLeaderUserId(UUID userId);
+    Optional<List<Team>> findByLeaderUserId(UUID userId);
 
+    boolean existsByTeamName(String teamName);
 }

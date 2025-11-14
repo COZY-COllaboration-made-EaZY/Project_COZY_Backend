@@ -1,80 +1,105 @@
 package com.ohgiraffers.COZYbe.domain.projects.controller;
-
-import com.ohgiraffers.COZYbe.domain.projects.dto.CreateProjectInterestDTO;
+import com.ohgiraffers.COZYbe.domain.auth.service.AuthService;
+import com.ohgiraffers.COZYbe.domain.projects.dto.CreateProjectDTO;
+import com.ohgiraffers.COZYbe.domain.projects.dto.ProjectDetailResponse;
+import com.ohgiraffers.COZYbe.domain.projects.dto.ProjectListItemResponse;
+import com.ohgiraffers.COZYbe.domain.projects.dto.UpdateProjectDTO;
 import com.ohgiraffers.COZYbe.domain.projects.entity.Project;
 import com.ohgiraffers.COZYbe.domain.projects.service.ProjectService;
+import com.ohgiraffers.COZYbe.domain.user.domain.entity.User;
 import com.ohgiraffers.COZYbe.jwt.JwtTokenProvider;
-import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
+@Slf4j
 @RestController
 @RequestMapping("/api/project")
 @RequiredArgsConstructor
 public class ProjectController {
 
     private final ProjectService projectService;
-    private final JwtTokenProvider jwtTokenProvider;
 
-    @GetMapping("/check-projectname")
+    //프로젝트 중복확인
+    @GetMapping("/check-project-name")
     public ResponseEntity<?> checkProjectName(@RequestParam String projectName) {
+        System.out.println("projectName :: " + projectName);
         boolean available = projectService.isProjectNameAvailable(projectName);
         return ResponseEntity.ok(Map.of("available", available));
     }
 
-    @PostMapping("/projectCreate")
-    public ResponseEntity<?> createProject(@RequestBody CreateProjectInterestDTO dto,
-                                           HttpServletRequest request) {
-        String userId = extractUserId(request);
-        Project project = projectService.createProject(dto, userId);
+
+    @PostMapping("/project-create")
+    public ResponseEntity<?> createProject(
+            @AuthenticationPrincipal Jwt jwt, @RequestBody CreateProjectDTO dto
+    ) {
+        UUID currentUserId = UUID.fromString(jwt.getSubject());
+        System.out.println("currentUserId :: " + currentUserId);
+        Project project = projectService.createProject(dto, currentUserId);
+        log.info("프로젝트 제작 성공");
         return ResponseEntity.ok(Map.of(
-                "projectId", project.getProjectId(),
+                "id", project.getProjectId(),
                 "projectName", project.getProjectName()
         ));
     }
 
-    @GetMapping("/my-projectInfo")
-    public ResponseEntity<?> getMyProjectInfo(HttpServletRequest request) {
-        String userId = extractUserId(request);
-        Project project = projectService.getProjectByUserId(userId);
-
+    // 팀의 프로젝트 리스트
+    @GetMapping("/my-team-project-list")
+    public ResponseEntity<?> getMyProjectInfo(@RequestParam UUID teamId) {
+        List<ProjectListItemResponse> projects = projectService.getProjectsByTeamId(teamId);
         return ResponseEntity.ok(Map.of(
-                "hasProject", true,
-                "projectId", project.getProjectId(),
-                "projectName", project.getProjectName(),
-                "createdAt", project.getCreatedAt()
+                "teamId", teamId,
+                "hasProject", !projects.isEmpty(),
+                "count", projects.size(),
+                "projects", projects
         ));
     }
 
-    @GetMapping("/name/{projectName}")
-    public ResponseEntity<?> getProjectByName(@PathVariable String projectName,
-                                              HttpServletRequest request) {
-        String userId = extractUserId(request);
-        Project project = projectService.getProjectByNameForUser(projectName, userId);
+    // 프로젝트 상세
+    @GetMapping("/project-detail-info")
+    public ResponseEntity<ProjectDetailResponse> getProjectDetailInfo(@RequestParam UUID projectId) {
+        ProjectDetailResponse dto = projectService.getProjectDetailInfo(projectId);
+        return ResponseEntity.ok(dto);
+    }
 
+    @DeleteMapping("/{projectId}")
+    public ResponseEntity<Void> deleteProject(@PathVariable UUID projectId,
+                                              @AuthenticationPrincipal Jwt jwt) {
+        UUID currentUserId = UUID.fromString(jwt.getSubject());
+        projectService.deleteProject(projectId, currentUserId);
+        return ResponseEntity.noContent().build();
+    }
+
+
+    @PutMapping("/{projectId}")
+    public ResponseEntity<?> updateProject(@PathVariable UUID projectId,
+                                           @RequestBody UpdateProjectDTO dto,
+                                           @AuthenticationPrincipal Jwt jwt) {
+        UUID currentUserId = UUID.fromString(jwt.getSubject());
+        Project p = projectService.updateProject(dto, projectId, currentUserId);
         return ResponseEntity.ok(Map.of(
-                "projectId", project.getProjectId(),
-                "projectName", project.getProjectName(),
-                "createdAt", project.getCreatedAt()
+                "projectId", p.getProjectId(),
+                "projectName", p.getProjectName(),
+                "description", p.getDescription(),
+                "devInterest", p.getDevInterest(),
+                "githubUrl", p.getGitHubUrl(),
+                "createdAt", p.getCreatedAt()
         ));
     }
 
-    private String extractUserId(HttpServletRequest req) {
-        String token = req.getHeader("Authorization");
-        if (token == null || !token.startsWith("Bearer ")) {
-            throw new RuntimeException("인증 토큰이 없습니다.");
-        }
-        return jwtTokenProvider.decodeUserIdFromJwt(token.substring(7));
-    }
 
-    @DeleteMapping("/{proejctId}")
-    public ResponseEntity<?> deleteProject(@PathVariable Long proejctId, HttpServletRequest request) {
-        String userId = extractUserId(request);
-        projectService.deleteProject(proejctId,userId);
-        return ResponseEntity.ok(Map.of("message", "프로젝트 및 관련 데이터가 삭제되었습니다."));
-    }
+
+
+
+
 }
 

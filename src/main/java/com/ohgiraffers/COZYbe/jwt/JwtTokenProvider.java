@@ -7,7 +7,9 @@ import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
+import org.springframework.web.server.ResponseStatusException;
 
 import javax.crypto.SecretKey;
 import java.util.*;
@@ -18,7 +20,6 @@ public class JwtTokenProvider {
 
     private final SecretKey secretKey;
     private final long expiration;
-    private final Set<String> invalidatedTokens = new HashSet<>(); // 🚀 로그아웃된 토큰 저장
 
     public JwtTokenProvider(SecretKey jwtHmacKey, @Value("${jwt.expiration}") long expiration) {
         this.secretKey = jwtHmacKey;
@@ -88,9 +89,6 @@ public class JwtTokenProvider {
             throw new ApplicationException(ErrorCode.INVALID_TOKEN);
         }
     }
-
-
-
     public Long getValidTime() {
         return expiration;
     }
