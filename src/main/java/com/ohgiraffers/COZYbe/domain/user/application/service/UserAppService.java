@@ -2,6 +2,7 @@ package com.ohgiraffers.COZYbe.domain.user.application.service;
 
 import com.ohgiraffers.COZYbe.common.error.ApplicationException;
 import com.ohgiraffers.COZYbe.common.error.ErrorCode;
+import com.ohgiraffers.COZYbe.domain.auth.dto.AccessInfoDTO;
 import com.ohgiraffers.COZYbe.domain.auth.dto.LoginDTO;
 import com.ohgiraffers.COZYbe.domain.user.application.dto.SignUpDTO;
 import com.ohgiraffers.COZYbe.domain.user.application.dto.UserInfoDTO;
@@ -27,6 +28,7 @@ public class UserAppService {
 
     private final UserDomainService userDomainService;
     private final PasswordEncoder passwordEncoder;
+    private final UserMapper userMapper;
 
     private static final String UPLOAD_DIR = "uploads/profile_images/";
     private static final String SERVER_URL = "http://localhost:8080/";
@@ -95,12 +97,7 @@ public class UserAppService {
 
     public UserInfoDTO getUserInfo(String userId) {
         User user = userDomainService.getUser(userId);
-        return new UserInfoDTO(
-                user.getEmail(),
-                user.getNickname(),
-                user.getProfileImageUrl(),
-                user.getStatusMessage()
-        );
+        return userMapper.EntityToInfoDTO(user);
     }
 
     public boolean isEmailAvailable(String email) {
@@ -137,12 +134,17 @@ public class UserAppService {
         return userDomainService.saveUser(user);
     }
 
-    public UUID verifyUser(LoginDTO dto){
+    public AccessInfoDTO verifyUser(LoginDTO dto){
         User user = userDomainService.getUserByEmail(dto.getEmail());
         if (!passwordEncoder.matches(dto.getPassword(), user.getPassword())) {
             throw new ApplicationException(ErrorCode.INVALID_PASSWORD);
         }
-        return user.getUserId();
+        return userMapper.EntityToAccessInfoDTO(user);
+    }
+
+    public AccessInfoDTO verifyUser(String userId){
+        User user = userDomainService.getUser(userId);
+        return userMapper.EntityToAccessInfoDTO(user);
     }
 
 

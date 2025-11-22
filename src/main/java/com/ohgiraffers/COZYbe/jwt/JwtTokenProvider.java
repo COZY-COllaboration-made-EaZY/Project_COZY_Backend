@@ -2,29 +2,23 @@ package com.ohgiraffers.COZYbe.jwt;
 
 import com.ohgiraffers.COZYbe.common.error.ApplicationException;
 import com.ohgiraffers.COZYbe.common.error.ErrorCode;
+import com.ohgiraffers.COZYbe.domain.auth.dto.AccessInfoDTO;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
+import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseCookie;
 import org.springframework.stereotype.Component;
-import org.springframework.web.server.ResponseStatusException;
 
-import javax.crypto.SecretKey;
+import java.time.Instant;
 import java.util.*;
 
 @Slf4j
+@AllArgsConstructor
 @Component
 public class JwtTokenProvider {
 
-    private final SecretKey secretKey;
-    private final long expiration;
-
-    public JwtTokenProvider(SecretKey jwtHmacKey, @Value("${jwt.expiration}") long expiration) {
-        this.secretKey = jwtHmacKey;
-        this.expiration = expiration;
-    }
+    private final JwtProperties properties;
 
     /**
      * 토큰생성
@@ -34,62 +28,85 @@ public class JwtTokenProvider {
      * audience : 토큰 수신자, 대상 애플리케이션
      * issuedAt : 발행일
      * exp : 만료일
-     * content : 추가 가능
+     * claims : 추가 데이터
      * }</pre>
      *
-     * @param userId User UUID;
+     * @param userInfo AccessInfoDTO;
      * @return JWT Token
      * */
-    public String createToken(UUID userId) {
+    public String createAccessToken(AccessInfoDTO userInfo) {
+        Instant now = Instant.now();
         return Jwts.builder()
                 .id(UUID.randomUUID().toString())
                 .issuer("COZY")
-                .subject(userId.toString())
+                .subject(userInfo.userId().toString())
                 .audience().add("COZY CLIENT").and()
-                .issuedAt(new Date())
-                .expiration(new Date(System.currentTimeMillis() + expiration))
-                .content("")
-                .signWith(secretKey)
+                .issuedAt(Date.from(now))
+                .expiration(Date.from(now.plusMillis(properties.getAccessExpiration())))
+                .claims(userInfo.toMap())
+                .signWith(properties.getKey())
                 .compact();
     }
 
-    public String createRefreshToken(UUID userId) {
-        long refreshExpiration = expiration * 10;
+    /**
+     * Refresh Token은 많은 claim을 담을 필요 없음
+     * */
+    public String createRefreshToken(String userId, String jti) {
+        Instant now = Instant.now();
         return Jwts.builder()
-                .id(UUID.randomUUID().toString())
+                .id(jti)
                 .issuer("COZY")
-                .subject(userId.toString())
+                .subject(userId)
                 .audience().add("COZY CLIENT").and()
-                .issuedAt(new Date())
-                .expiration(new Date(System.currentTimeMillis() + refreshExpiration))
-                .signWith(secretKey)
+                .issuedAt(Date.from(now))
+                .expiration(Date.from(now.plusMillis(properties.getRefreshExpiration())))
+                .signWith(properties.getKey())
+                .claim("version","1")
+                .claim("deviceId",UUID.randomUUID().toString())
                 .compact();
-
     }
 
+    public String createRefreshToken(String userId){
+        return this.createRefreshToken(userId, UUID.randomUUID().toString());
+    }
 
-//    @Nullable
+    public ResponseCookie createRefreshCookie(String refreshToken) {
+        return ResponseCookie.from("refreshToken", refreshToken)
+                .httpOnly(true)
+                .secure(true)
+                .sameSite("Strict")
+                .path("/")
+                .maxAge(properties.getRefreshDuration())
+                .build();
+    }
+
+    public String decodeJtiFromJwt(String token){
+        return decodeJwt(token).getId();
+    }
+
     public String decodeUserIdFromJwt(String token) {
-        if (token == null || token.trim().isEmpty()) {
-            log.error("Token is Empty");
-            throw new ApplicationException(ErrorCode.INVALID_TOKEN);
-//            return null;
-        }
+        return decodeJwt(token).getSubject();
+    }
 
+
+
+    /**
+     * 서명 검증되면 디코드 <br>
+     * 검증 되는 목록 : 암호화, ttl
+     * */
+    public Claims decodeJwt(String token){
+        if (token == null || token.trim().isEmpty()){
+            throw new ApplicationException(ErrorCode.ANONYMOUS_USER);
+        }
         try {
-            Claims claims = Jwts.parser()
-                    .verifyWith((SecretKey) secretKey)
+            return Jwts.parser()
+                    .verifyWith(properties.getKey())
                     .build()
                     .parseSignedClaims(token)
                     .getPayload();
-
-            return claims.getSubject();
-        } catch (Exception e) {
+        }catch (Exception e){
             log.error(e.getMessage());
             throw new ApplicationException(ErrorCode.INVALID_TOKEN);
         }
-    }
-    public Long getValidTime() {
-        return expiration;
     }
 }

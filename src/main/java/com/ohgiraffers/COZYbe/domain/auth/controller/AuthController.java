@@ -1,23 +1,15 @@
 package com.ohgiraffers.COZYbe.domain.auth.controller;
 
-import com.ohgiraffers.COZYbe.common.error.ApplicationException;
-import com.ohgiraffers.COZYbe.common.error.ErrorCode;
-import com.ohgiraffers.COZYbe.domain.auth.dto.AuthTokenDTO;
+import com.ohgiraffers.COZYbe.domain.auth.dto.TokenWrapperDTO;
+import com.ohgiraffers.COZYbe.domain.auth.dto.AuthDTO;
 import com.ohgiraffers.COZYbe.domain.auth.dto.LoginDTO;
 import com.ohgiraffers.COZYbe.domain.auth.service.AuthService;
 import com.ohgiraffers.COZYbe.domain.auth.service.BlocklistService;
-import com.ohgiraffers.COZYbe.domain.user.domain.service.UserDomainService;
-import com.ohgiraffers.COZYbe.jwt.JwtTokenProvider;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.ResponseCookie;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.Map;
-import java.util.UUID;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -27,40 +19,41 @@ public class AuthController {
 
     private final AuthService authService;
     private final BlocklistService blocklistService;
-    private final JwtTokenProvider jwtTokenProvider;
-    private final UserDomainService userDomainService;
 
 
     @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody LoginDTO loginDTO) {
-        AuthTokenDTO authTokenDTO = authService.login(loginDTO);
-        String nickName = userDomainService.getUser(
-                jwtTokenProvider.decodeUserIdFromJwt(authTokenDTO.accessToken())
-        ).getNickname();
-        log.info("user 로그인 : {}", nickName);
-        ResponseCookie refreshCookie = ResponseCookie.from("refreshToken", authTokenDTO.refreshToken())
-                .httpOnly(true)
-                .secure(true)
-                .sameSite("Strict")
-                .path("/")
-                .maxAge(7 * 24 * 60 * 60)
-                .build();
-
+    public ResponseEntity<?> login(
+            @CookieValue(name = "refreshToken", required = false) String refreshToken,
+            @RequestBody LoginDTO loginDTO
+    ) {
+        AuthDTO authTokenDTO = authService.login(loginDTO, refreshToken);
+        if (authTokenDTO.refreshCookie() == null){  //이미 유효한 리프레시 토큰이 있는 경우 refresh만
+            return ResponseEntity.ok().body(new TokenWrapperDTO(authTokenDTO.accessToken()));
+        }
         return ResponseEntity.ok()
-                .header("Set-Cookie", refreshCookie.toString())
-                .body(Map.of(
-                        "accessToken", authTokenDTO.accessToken()
-                ));
+                .header(HttpHeaders.SET_COOKIE, authTokenDTO.refreshCookie().toString())
+                .body(new TokenWrapperDTO(authTokenDTO.accessToken()));
+    }
+
+    @GetMapping("/refresh")
+    public ResponseEntity<?> refresh(
+            @CookieValue(name = "refreshToken", required = false) String refreshToken
+    ){
+        TokenWrapperDTO tokenDTO = authService.reissueAccessToken(refreshToken);
+        return ResponseEntity.ok().body(tokenDTO);
     }
 
 
-    @PostMapping("/logout")
-    public ResponseEntity<Void> logout(@AuthenticationPrincipal Jwt jwt) {
-        String jti = jwt.getId();
-
-        long ttl = jwt.getExpiresAt().toEpochMilli() - System.currentTimeMillis();
-        blocklistService.store(jti, ttl);
+    @DeleteMapping("/logout")
+    public ResponseEntity<?> logout(
+            @CookieValue(name = "refreshToken", required = false) String refreshToken
+    ) {
+        authService.logout(refreshToken);
         return ResponseEntity.ok().build();
     }
+
+
+
+
 
 }
