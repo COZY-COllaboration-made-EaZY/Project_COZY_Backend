@@ -1,17 +1,12 @@
 package com.ohgiraffers.COZYbe.domain.projects.controller;
-import com.ohgiraffers.COZYbe.domain.auth.service.AuthService;
 import com.ohgiraffers.COZYbe.domain.projects.dto.CreateProjectDTO;
 import com.ohgiraffers.COZYbe.domain.projects.dto.ProjectDetailResponse;
 import com.ohgiraffers.COZYbe.domain.projects.dto.ProjectListItemResponse;
 import com.ohgiraffers.COZYbe.domain.projects.dto.UpdateProjectDTO;
 import com.ohgiraffers.COZYbe.domain.projects.entity.Project;
 import com.ohgiraffers.COZYbe.domain.projects.service.ProjectService;
-import com.ohgiraffers.COZYbe.domain.user.domain.entity.User;
-import com.ohgiraffers.COZYbe.jwt.JwtTokenProvider;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;

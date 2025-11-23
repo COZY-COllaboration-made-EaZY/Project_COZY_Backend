@@ -1,7 +1,6 @@
-package com.ohgiraffers.COZYbe.domain.auth.entity;
+package com.ohgiraffers.COZYbe.domain.auth.domain.entity;
 
 
-import jakarta.persistence.Column;
 import jakarta.persistence.Id;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -20,14 +19,13 @@ public class RefreshToken {
     @Id
     private String id;
 
-
     private String userId;
-    private String token;
+
+    private String jti;
 
     private String deviceId;
-    private Long version;
 
-    @TimeToLive
+    @TimeToLive     // default TimeUnit.SECONDS
     private Long ttl;
 
 }

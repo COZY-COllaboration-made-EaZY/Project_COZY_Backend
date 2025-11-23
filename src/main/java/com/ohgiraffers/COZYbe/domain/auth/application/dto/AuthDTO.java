@@ -1,4 +1,4 @@
-package com.ohgiraffers.COZYbe.domain.auth.dto;
+package com.ohgiraffers.COZYbe.domain.auth.application.dto;
 
 import org.springframework.http.ResponseCookie;
 

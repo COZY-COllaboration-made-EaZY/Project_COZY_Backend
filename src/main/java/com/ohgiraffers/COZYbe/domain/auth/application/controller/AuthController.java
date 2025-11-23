@@ -1,10 +1,9 @@
-package com.ohgiraffers.COZYbe.domain.auth.controller;
+package com.ohgiraffers.COZYbe.domain.auth.application.controller;
 
-import com.ohgiraffers.COZYbe.domain.auth.dto.TokenWrapperDTO;
-import com.ohgiraffers.COZYbe.domain.auth.dto.AuthDTO;
-import com.ohgiraffers.COZYbe.domain.auth.dto.LoginDTO;
-import com.ohgiraffers.COZYbe.domain.auth.service.AuthService;
-import com.ohgiraffers.COZYbe.domain.auth.service.BlocklistService;
+import com.ohgiraffers.COZYbe.domain.auth.application.dto.TokenWrapperDTO;
+import com.ohgiraffers.COZYbe.domain.auth.application.dto.AuthDTO;
+import com.ohgiraffers.COZYbe.domain.auth.application.dto.LoginDTO;
+import com.ohgiraffers.COZYbe.domain.auth.application.service.AuthService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
@@ -18,7 +17,6 @@ import org.springframework.web.bind.annotation.*;
 public class AuthController {
 
     private final AuthService authService;
-    private final BlocklistService blocklistService;
 
 
     @PostMapping("/login")

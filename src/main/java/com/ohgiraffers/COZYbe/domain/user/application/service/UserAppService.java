@@ -2,8 +2,8 @@ package com.ohgiraffers.COZYbe.domain.user.application.service;
 
 import com.ohgiraffers.COZYbe.common.error.ApplicationException;
 import com.ohgiraffers.COZYbe.common.error.ErrorCode;
-import com.ohgiraffers.COZYbe.domain.auth.dto.AccessInfoDTO;
-import com.ohgiraffers.COZYbe.domain.auth.dto.LoginDTO;
+import com.ohgiraffers.COZYbe.domain.auth.application.dto.AccessInfoDTO;
+import com.ohgiraffers.COZYbe.domain.auth.application.dto.LoginDTO;
 import com.ohgiraffers.COZYbe.domain.user.application.dto.SignUpDTO;
 import com.ohgiraffers.COZYbe.domain.user.application.dto.UserInfoDTO;
 import com.ohgiraffers.COZYbe.domain.user.application.dto.UserUpdateDTO;

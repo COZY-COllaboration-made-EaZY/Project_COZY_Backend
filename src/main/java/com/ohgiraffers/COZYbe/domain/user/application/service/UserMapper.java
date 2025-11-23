@@ -1,7 +1,7 @@
 package com.ohgiraffers.COZYbe.domain.user.application.service;
 
 
-import com.ohgiraffers.COZYbe.domain.auth.dto.AccessInfoDTO;
+import com.ohgiraffers.COZYbe.domain.auth.application.dto.AccessInfoDTO;
 import com.ohgiraffers.COZYbe.domain.user.application.dto.UserInfoDTO;
 import com.ohgiraffers.COZYbe.domain.user.domain.entity.User;
 import org.mapstruct.Mapper;

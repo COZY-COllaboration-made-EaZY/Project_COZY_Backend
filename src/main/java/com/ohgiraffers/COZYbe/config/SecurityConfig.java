@@ -1,13 +1,8 @@
 package com.ohgiraffers.COZYbe.config;
 
 
-import com.ohgiraffers.COZYbe.jwt.JwtTokenProvider;
 import com.ohgiraffers.COZYbe.jwt.JwtWhiteListHolder;
-import com.ohgiraffers.COZYbe.jwt.TokenBlocklistFilter;
-import io.jsonwebtoken.io.Decoders;
-import io.jsonwebtoken.security.Keys;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.Customizer;
@@ -17,13 +12,11 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-import org.springframework.security.web.context.SecurityContextHolderFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
-import javax.crypto.SecretKey;
+
 import java.util.Arrays;
 
 @RequiredArgsConstructor
@@ -31,7 +24,7 @@ import java.util.Arrays;
 public class SecurityConfig {
 
     private final JwtWhiteListHolder whiteListHolder;
-    private final TokenBlocklistFilter tokenBlocklistFilter;
+//    private final TokenBlocklistFilter tokenBlocklistFilter;
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
@@ -49,8 +42,8 @@ public class SecurityConfig {
                 .oauth2ResourceServer(oauth2-> oauth2
                         .jwt(Customizer.withDefaults())
                 )
-                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .addFilterAfter(tokenBlocklistFilter, SecurityContextHolderFilter.class);
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
+//                .addFilterAfter(tokenBlocklistFilter, SecurityContextHolderFilter.class);
         return http.build();
     }
 

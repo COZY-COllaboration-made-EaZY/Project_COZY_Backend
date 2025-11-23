@@ -1,4 +1,4 @@
-package com.ohgiraffers.COZYbe.domain.auth.dto;
+package com.ohgiraffers.COZYbe.domain.auth.application.dto;
 
 import java.util.Map;
 import java.util.UUID;

@@ -2,7 +2,7 @@ package com.ohgiraffers.COZYbe.jwt;
 
 import com.ohgiraffers.COZYbe.common.error.ApplicationException;
 import com.ohgiraffers.COZYbe.common.error.ErrorCode;
-import com.ohgiraffers.COZYbe.domain.auth.dto.AccessInfoDTO;
+import com.ohgiraffers.COZYbe.domain.auth.application.dto.AccessInfoDTO;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import lombok.AllArgsConstructor;
@@ -61,7 +61,6 @@ public class JwtTokenProvider {
                 .issuedAt(Date.from(now))
                 .expiration(Date.from(now.plusMillis(properties.getRefreshExpiration())))
                 .signWith(properties.getKey())
-                .claim("version","1")
                 .claim("deviceId",UUID.randomUUID().toString())
                 .compact();
     }

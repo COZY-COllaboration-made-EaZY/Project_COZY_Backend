@@ -1,13 +1,11 @@
-package com.ohgiraffers.COZYbe.domain.auth.service;
+package com.ohgiraffers.COZYbe.domain.auth.application.service;
 
-import com.ohgiraffers.COZYbe.common.error.ApplicationException;
-import com.ohgiraffers.COZYbe.common.error.ErrorCode;
-import com.ohgiraffers.COZYbe.domain.auth.dto.AccessInfoDTO;
-import com.ohgiraffers.COZYbe.domain.auth.dto.TokenWrapperDTO;
-import com.ohgiraffers.COZYbe.domain.auth.dto.AuthDTO;
-import com.ohgiraffers.COZYbe.domain.auth.dto.LoginDTO;
-import com.ohgiraffers.COZYbe.domain.auth.entity.RefreshToken;
-import com.ohgiraffers.COZYbe.domain.auth.repository.RefreshTokenRepository;
+import com.ohgiraffers.COZYbe.domain.auth.application.dto.AccessInfoDTO;
+import com.ohgiraffers.COZYbe.domain.auth.application.dto.TokenWrapperDTO;
+import com.ohgiraffers.COZYbe.domain.auth.application.dto.AuthDTO;
+import com.ohgiraffers.COZYbe.domain.auth.application.dto.LoginDTO;
+import com.ohgiraffers.COZYbe.domain.auth.domain.entity.RefreshToken;
+import com.ohgiraffers.COZYbe.domain.auth.domain.service.RefreshTokenService;
 import com.ohgiraffers.COZYbe.domain.user.application.service.UserAppService;
 import com.ohgiraffers.COZYbe.jwt.JwtTokenProvider;
 
@@ -26,9 +24,10 @@ import java.util.UUID;
 @Service
 public class AuthService {
 
+    private final RefreshTokenService refreshTokenService;
+
     private final UserAppService userAppService;
     private final JwtTokenProvider jwtTokenProvider;
-    private final RefreshTokenRepository refreshTokenRepository;
 
 
     @Transactional
@@ -41,7 +40,7 @@ public class AuthService {
             if (jti != null){
                 return new AuthDTO(null, createAccessToken(accessDTO));     //이미 유효한 리프레시 토큰이 있는 경우 access토큰만 생성
             }
-            // 해당하는 리프레시 토큰이 없으면 빠져나옴
+            // 해당하는 리프레시 토큰이 없으면(null) 빠져나옴
         }
 
         ResponseCookie refreshCookie = this.createRefreshToken(accessDTO.userId().toString());
@@ -55,11 +54,10 @@ public class AuthService {
         ResponseCookie refreshCookie = jwtTokenProvider.createRefreshCookie(refreshToken);
         RefreshToken tokenEntity = RefreshToken.builder()
                 .userId(userId)
-                .token(jti)
+                .jti(jti)
                 .ttl(refreshCookie.getMaxAge().toSeconds())
-                .version(1L)
                 .build();
-        refreshTokenRepository.save(tokenEntity);
+        refreshTokenService.create(tokenEntity);
         return refreshCookie;
     }
 
@@ -68,11 +66,11 @@ public class AuthService {
     }
 
     private String getRefreshToken(String userId, String deviceId){
-        RefreshToken tokenEntity = refreshTokenRepository.findByTokenAndDeviceId(userId,deviceId).orElse(null);
+        RefreshToken tokenEntity = refreshTokenService.findByUserIdAndDeviceId(userId,deviceId);
         if(tokenEntity == null){
             return null;
         }
-        return tokenEntity.getToken();
+        return tokenEntity.getJti();
     }
 
     @Transactional
@@ -86,33 +84,19 @@ public class AuthService {
         Claims claims = jwtTokenProvider.decodeJwt(refreshToken);
         String userId = claims.getSubject();
         String jti = claims.getId();
-        RefreshToken tokenEntity = refreshTokenRepository.findByUserIdAndToken(userId, jti)
-                .orElseThrow(() -> new ApplicationException(ErrorCode.INVALID_TOKEN));  //로그아웃 되어있으면 여기서 걸림
-        if (tokenEntity.getVersion() != claims.get("version")) {
-            throw new ApplicationException(ErrorCode.INVALID_TOKEN);
-        }
-        return userId;
+        RefreshToken tokenEntity = refreshTokenService.findByUserIdAndTokenId(userId, jti);  //로그아웃 되어있으면 여기서 걸림
+        return tokenEntity.getUserId();
     }
 
     @Transactional
-    public void logout(String jti) {
-        RefreshToken tokenEntity = refreshTokenRepository.findByToken(jti)
-                .orElseThrow(()-> new ApplicationException(ErrorCode.INVALID_TOKEN));
-        refreshTokenRepository.delete(tokenEntity);
+    public void logout(String refreshToken) {
+        Claims claims = jwtTokenProvider.decodeJwt(refreshToken);
+        RefreshToken tokenEntity = refreshTokenService.findByTokenId(claims.getId());
+        refreshTokenService.delete(tokenEntity);
     }
 
 
-    /**
-     * 버전 올리는 함수 <br>
-     * 버전 올려야 하는 경우 : 비밀번호 재설정, 모든 기기에서 로그아웃 눌렀을때 <br>
-     * 리프레시 토큰의 로테이션과 혼동하지 말것
-    * */
-    public void increaseTokenVersion(){
-
-    }
-
-
-
+    @Deprecated
     public String getUserIdFromToken(String token) {
         return jwtTokenProvider.decodeUserIdFromJwt(token);
     }
