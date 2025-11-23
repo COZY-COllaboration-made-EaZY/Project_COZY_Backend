@@ -33,28 +33,43 @@ public class AuthService {
     @Transactional
     public AuthDTO login(LoginDTO loginDTO, String refreshToken) {
         AccessInfoDTO accessDTO = userAppService.verifyUser(loginDTO);
-        if (refreshToken != null && !refreshToken.trim().isEmpty()){     //리프레시 토큰이 있나
-            Claims claims = jwtTokenProvider.decodeJwt(refreshToken);   //토큰이 유효한가
-            String deviceId = claims.get("deviceId").toString();
-            String jti = this.getRefreshToken(accessDTO.userId().toString(), deviceId);
-            if (jti != null){
-                return new AuthDTO(null, createAccessToken(accessDTO));     //이미 유효한 리프레시 토큰이 있는 경우 access토큰만 생성
+        String userId = accessDTO.userId().toString();
+        String reuseDeviceId = null;
+        if (refreshToken != null && !refreshToken.trim().isEmpty()){     //브라우저 리프레시 토큰이 있나
+            Claims claims = jwtTokenProvider.decodeJwt(refreshToken);   //브라우저 리프레시 토큰이 유효한가
+            reuseDeviceId = claims.get("deviceId", String.class);
+            String presentedJti = claims.getId();
+            if (reuseDeviceId != null) {
+                RefreshToken stored = refreshTokenService.findByUserIdAndDeviceId(userId, reuseDeviceId);
+                if (stored != null && presentedJti.equals(stored.getId())) {   //저장된게 있음, jti일치
+                    return new AuthDTO(null, createAccessToken(accessDTO));     //이미 유효한 리프레시 토큰이 있는 경우 access토큰만 생성
+                }
+                if (stored != null) {   //저장된게 있기만함
+                    refreshTokenService.delete(stored); // 저장되어있는게 유효하지 않으므로 삭제
+                }
             }
-            // 해당하는 리프레시 토큰이 없으면(null) 빠져나옴
         }
 
-        ResponseCookie refreshCookie = this.createRefreshToken(accessDTO.userId().toString());
+        ResponseCookie refreshCookie = this.createRefreshToken(userId, reuseDeviceId);
         String accessToken = createAccessToken(accessDTO);
         return new AuthDTO(refreshCookie, accessToken);
     }
 
-    private ResponseCookie createRefreshToken(String userId){
+    private ResponseCookie createRefreshToken(String userId, String deviceId){
         String jti = UUID.randomUUID().toString();
-        String refreshToken = jwtTokenProvider.createRefreshToken(userId, jti);
+        String resolvedDeviceId = deviceId != null ? deviceId : UUID.randomUUID().toString();
+        String refreshToken = jwtTokenProvider.createRefreshToken(userId, jti, resolvedDeviceId);
         ResponseCookie refreshCookie = jwtTokenProvider.createRefreshCookie(refreshToken);
+
+        RefreshToken existing = refreshTokenService.findByUserIdAndDeviceId(userId, resolvedDeviceId);
+        if (existing != null) {
+            refreshTokenService.delete(existing);
+        }
+
         RefreshToken tokenEntity = RefreshToken.builder()
+                .id(jti)
                 .userId(userId)
-                .jti(jti)
+                .deviceId(resolvedDeviceId)
                 .ttl(refreshCookie.getMaxAge().toSeconds())
                 .build();
         refreshTokenService.create(tokenEntity);
@@ -63,14 +78,6 @@ public class AuthService {
 
     private String createAccessToken(AccessInfoDTO accessDTO){
         return jwtTokenProvider.createAccessToken(accessDTO);
-    }
-
-    private String getRefreshToken(String userId, String deviceId){
-        RefreshToken tokenEntity = refreshTokenService.findByUserIdAndDeviceId(userId,deviceId);
-        if(tokenEntity == null){
-            return null;
-        }
-        return tokenEntity.getJti();
     }
 
     @Transactional

@@ -51,7 +51,7 @@ public class JwtTokenProvider {
     /**
      * Refresh Token은 많은 claim을 담을 필요 없음
      * */
-    public String createRefreshToken(String userId, String jti) {
+    public String createRefreshToken(String userId, String jti, String deviceId) {
         Instant now = Instant.now();
         return Jwts.builder()
                 .id(jti)
@@ -61,12 +61,12 @@ public class JwtTokenProvider {
                 .issuedAt(Date.from(now))
                 .expiration(Date.from(now.plusMillis(properties.getRefreshExpiration())))
                 .signWith(properties.getKey())
-                .claim("deviceId",UUID.randomUUID().toString())
+                .claim("deviceId", deviceId)
                 .compact();
     }
 
     public String createRefreshToken(String userId){
-        return this.createRefreshToken(userId, UUID.randomUUID().toString());
+        return this.createRefreshToken(userId, UUID.randomUUID().toString(), UUID.randomUUID().toString());
     }
 
     public ResponseCookie createRefreshCookie(String refreshToken) {

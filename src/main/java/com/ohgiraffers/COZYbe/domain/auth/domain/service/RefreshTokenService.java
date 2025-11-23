@@ -22,13 +22,14 @@ public class RefreshTokenService {
                 .orElse(null);
     }
 
-    public RefreshToken findByUserIdAndTokenId(String userId, String jti) {
-        return repository.findByUserIdAndJti(userId,jti)
+    public RefreshToken findByUserIdAndTokenId(String jti, String userId) {
+        return repository.findById(jti)
+                .filter(token -> userId.equals(token.getUserId()))
                 .orElseThrow(() -> new ApplicationException(ErrorCode.INVALID_TOKEN));
     }
 
     public RefreshToken findByTokenId(String jti) {
-        return repository.findByJti(jti)
+        return repository.findById(jti)
                 .orElseThrow(()-> new ApplicationException(ErrorCode.INVALID_TOKEN));
     }
 

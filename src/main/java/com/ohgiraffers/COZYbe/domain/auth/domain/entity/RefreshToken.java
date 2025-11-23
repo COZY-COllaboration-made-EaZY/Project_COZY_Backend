@@ -21,8 +21,6 @@ public class RefreshToken {
 
     private String userId;
 
-    private String jti;
-
     private String deviceId;
 
     @TimeToLive     // default TimeUnit.SECONDS
