@@ -5,7 +5,7 @@ import com.ohgiraffers.COZYbe.domain.user.application.dto.SignUpDTO;
 import com.ohgiraffers.COZYbe.domain.user.application.dto.UserInfoDTO;
 import com.ohgiraffers.COZYbe.domain.user.application.dto.UserUpdateDTO;
 import com.ohgiraffers.COZYbe.domain.user.domain.entity.User;
-import com.ohgiraffers.COZYbe.domain.auth.service.AuthService;
+import com.ohgiraffers.COZYbe.domain.auth.application.service.AuthService;
 import com.ohgiraffers.COZYbe.domain.user.application.service.UserAppService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -17,7 +17,6 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.util.Map;
 import java.util.Objects;
-import java.util.UUID;
 
 @Slf4j
 @RequiredArgsConstructor

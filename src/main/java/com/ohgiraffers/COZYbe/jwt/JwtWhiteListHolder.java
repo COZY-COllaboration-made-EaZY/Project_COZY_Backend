@@ -12,10 +12,9 @@ public class JwtWhiteListHolder {
             "/api/user/check-email",
 
             // 기존 auth 경로 (로그인 관련)
-            "/api/auth/check-email",
-            "/api/auth/register",
-            "/api/auth/signup",
             "/api/auth/login",
+            "/api/auth/refresh",
+            "/api/auth/logout",
 
             // Swagger
             "/v3/api-docs/**",
