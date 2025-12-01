@@ -134,6 +134,16 @@ public class UserAppService {
         return userDomainService.saveUser(user);
     }
 
+
+
+    @Transactional
+    public UserUpdateDTO updateUser(String userId, UserUpdateDTO updateDTO) {
+        User exist = userDomainService.getUser(userId);
+        exist.setNickname(updateDTO.getNickname());
+        exist.setStatusMessage(updateDTO.getStatusMessage());
+        return null;
+    }
+
     public AccessInfoDTO verifyUser(LoginDTO dto){
         User user = userDomainService.getUserByEmail(dto.getEmail());
         if (!passwordEncoder.matches(dto.getPassword(), user.getPassword())) {

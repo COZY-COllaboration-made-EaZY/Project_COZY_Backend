@@ -9,6 +9,7 @@ import com.ohgiraffers.COZYbe.domain.auth.application.service.AuthService;
 import com.ohgiraffers.COZYbe.domain.user.application.service.UserAppService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
@@ -57,20 +58,22 @@ public class UserController {
 
     @GetMapping("/current-user")
     public ResponseEntity<?> getCurrentUser(@RequestHeader("Authorization") String token) {
-        log.info(token);
-        if (token == null || !token.startsWith("Bearer ")) {
-            return ResponseEntity.status(401).body(Map.of("error", "인증 토큰이 필요합니다."));
-        }
+//        log.info(token);
+//        if (token == null || !token.startsWith("Bearer ")) {
+//            return ResponseEntity.status(401).body(Map.of("error", "인증 토큰이 필요합니다."));
+//        }
+//
+//        try {
+//            String jwt = token.substring(7);
+//            String userId = authService.getUserIdFromToken(jwt);
+//            UserInfoDTO userInfoDTO = userAppService.getUserInfo(userId);
+//            return ResponseEntity.ok(userInfoDTO);
+//        } catch (Exception e) {
+//            e.printStackTrace();
+//            return ResponseEntity.status(500).body(Map.of("error", "사용자 조회 실패: " + e.getMessage()));
+//        }
 
-        try {
-            String jwt = token.substring(7);
-            String userId = authService.getUserIdFromToken(jwt);
-            UserInfoDTO userInfoDTO = userAppService.getUserInfo(userId);
-            return ResponseEntity.ok(userInfoDTO);
-        } catch (Exception e) {
-            e.printStackTrace();
-            return ResponseEntity.status(500).body(Map.of("error", "사용자 조회 실패: " + e.getMessage()));
-        }
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
     }
 
     // 이메일 중복 확인
@@ -82,40 +85,43 @@ public class UserController {
 
     @PostMapping("/verify-password")
     public ResponseEntity<?> verifyPassword(@RequestHeader("Authorization") String token, @RequestBody Map<String, String> request) {
-        if (token == null || !token.startsWith("Bearer ")) {
-            return ResponseEntity.status(401).body(Map.of("error", "인증 토큰이 없습니다."));
-        }
+//        if (token == null || !token.startsWith("Bearer ")) {
+//            return ResponseEntity.status(401).body(Map.of("error", "인증 토큰이 없습니다."));
+//        }
+//
+//        System.out.println("받은 인증 토큰: " + token);
+//
+//
+//        String userId;
+//        try {
+//            userId = authService.getUserIdFromToken(token.substring(7)); // "Bearer " 제거 후 이메일 추출
+//        } catch (Exception e) {
+//            return ResponseEntity.status(400).body(Map.of("error", "유효하지 않은 토큰입니다."));
+//        }
+//
+//        String inputPassword = request.get("password");
+//
+//        if (inputPassword == null) {
+//            System.out.println("비밀번호가 전달되지 않음");
+//            return ResponseEntity.status(400).body(Map.of("error", "비밀번호가 필요합니다."));
+//        }
+//
+//        try {
+//            boolean isValid = userAppService.verifyPassword(userId, inputPassword);
+//
+//            if (isValid) {
+//                System.out.println("✅ 비밀번호 확인 성공");
+//                return ResponseEntity.ok(Map.of("valid", true));
+//            } else {
+//                System.out.println("❌ 비밀번호 불일치");
+//                return ResponseEntity.status(400).body(Map.of("error", "비밀번호가 일치하지 않습니다."));
+//            }
+//        } catch (IllegalArgumentException e) {
+//            return ResponseEntity.status(400).body(Map.of("error", e.getMessage()));
+//        }
 
-        System.out.println("받은 인증 토큰: " + token);
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
 
-
-        String userId;
-        try {
-            userId = authService.getUserIdFromToken(token.substring(7)); // "Bearer " 제거 후 이메일 추출
-        } catch (Exception e) {
-            return ResponseEntity.status(400).body(Map.of("error", "유효하지 않은 토큰입니다."));
-        }
-
-        String inputPassword = request.get("password");
-
-        if (inputPassword == null) {
-            System.out.println("비밀번호가 전달되지 않음");
-            return ResponseEntity.status(400).body(Map.of("error", "비밀번호가 필요합니다."));
-        }
-
-        try {
-            boolean isValid = userAppService.verifyPassword(userId, inputPassword);
-
-            if (isValid) {
-                System.out.println("✅ 비밀번호 확인 성공");
-                return ResponseEntity.ok(Map.of("valid", true));
-            } else {
-                System.out.println("❌ 비밀번호 불일치");
-                return ResponseEntity.status(400).body(Map.of("error", "비밀번호가 일치하지 않습니다."));
-            }
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.status(400).body(Map.of("error", e.getMessage()));
-        }
     }
 
     @PostMapping(value = "/update-info", consumes = { "multipart/form-data" })
@@ -148,6 +154,15 @@ public class UserController {
 
 
 
+    @PatchMapping("/update")
+    public ResponseEntity<?> updateUser(
+            @AuthenticationPrincipal Jwt jwt,
+            @RequestBody UserUpdateDTO updateDTO
+    ){
+        String userId = jwt.getSubject();
+        UserUpdateDTO updated = userAppService.updateUser(userId, updateDTO);
+        return ResponseEntity.ok().body(updated);
+    }
 
 
     @GetMapping("/check-current")

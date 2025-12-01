@@ -16,6 +16,7 @@ import java.util.UUID;
 @Table(name = "tbl_user")
 public class User extends BaseTimeEntity {
 
+    @Setter(AccessLevel.NONE)
     @Id
     @GeneratedValue
     @Column(name = "user_id", columnDefinition = "BINARY(16)")
