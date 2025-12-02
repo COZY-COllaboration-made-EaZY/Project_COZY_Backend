@@ -4,6 +4,9 @@ import com.ohgiraffers.COZYbe.common.error.ApplicationException;
 import com.ohgiraffers.COZYbe.common.error.ErrorCode;
 import com.ohgiraffers.COZYbe.domain.auth.application.dto.AccessInfoDTO;
 import com.ohgiraffers.COZYbe.domain.auth.application.dto.LoginDTO;
+import com.ohgiraffers.COZYbe.domain.auth.domain.entity.RefreshToken;
+import com.ohgiraffers.COZYbe.domain.auth.domain.service.RefreshTokenService;
+import com.ohgiraffers.COZYbe.domain.files.service.FileService;
 import com.ohgiraffers.COZYbe.domain.user.application.dto.SignUpDTO;
 import com.ohgiraffers.COZYbe.domain.user.application.dto.UserInfoDTO;
 import com.ohgiraffers.COZYbe.domain.user.application.dto.UserUpdateDTO;
@@ -30,32 +33,17 @@ public class UserAppService {
     private final PasswordEncoder passwordEncoder;
     private final UserMapper userMapper;
 
-    private static final String UPLOAD_DIR = "uploads/profile_images/";
-    private static final String SERVER_URL = "http://localhost:8080/";
+    private final RefreshTokenService refreshTokenService;
+    private final FileService fileService;
 
 
-    // 회원가입
-    public User register(SignUpDTO signUpDTO, MultipartFile profileImage) throws IOException {
-        String profileImageUrl = null;
-        if (profileImage != null && !profileImage.isEmpty()) {
-            profileImageUrl = saveProfileImage(profileImage);
-        }
-        User user = User.builder()
-                .email(signUpDTO.getEmail())
-                .nickname(signUpDTO.getNickname())
-                .password(passwordEncoder.encode(signUpDTO.getPassword()))
-                .profileImageUrl(profileImageUrl)
-                .build();
-        return userDomainService.saveUser(user);
-    }
-
-
+    @Transactional
     public UserInfoDTO registerDefault(SignUpDTO signUpDTO) {
-        String profileImageUrl = UPLOAD_DIR + "Default_Profile.png";
         if (!isEmailAvailable(signUpDTO.getEmail())){
             throw new ApplicationException(ErrorCode.INVALID_EMAIL);
         };
 
+        String profileImageUrl = fileService.getDefaultProfileImageDir();
         User user = User.builder()
                 .email(signUpDTO.getEmail())
                 .nickname(signUpDTO.getNickname())
@@ -65,34 +53,9 @@ public class UserAppService {
                 .build();
 
         User registered = userDomainService.saveUser(user);
-        return new UserInfoDTO(
-                registered.getEmail(),
-                registered.getNickname(),
-                registered.getProfileImageUrl(),
-                registered.getStatusMessage()
-        );
+        return userMapper.EntityToInfoDTO(registered);
     }
 
-    // 프로필 이미지 저장
-    private String saveProfileImage(MultipartFile file) throws IOException {
-        File uploadDir = new File(UPLOAD_DIR);
-        if (!uploadDir.exists()) {
-            uploadDir.mkdirs();
-        }
-
-        String originalFileName = file.getOriginalFilename();
-        if (originalFileName == null) {
-            throw new IllegalArgumentException("파일 이름이 존재하지 않습니다.");
-        }
-
-        String fileExtension = originalFileName.substring(originalFileName.lastIndexOf("."));
-        String newFileName = UUID.randomUUID() + fileExtension;
-
-        Path filePath = Path.of(UPLOAD_DIR, newFileName);
-        Files.copy(file.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
-
-        return SERVER_URL + UPLOAD_DIR + newFileName;
-    }
 
 
     public UserInfoDTO getUserInfo(String userId) {
@@ -113,35 +76,18 @@ public class UserAppService {
         return true;
     }
 
-    public User updateUserInfo(String userId, UserUpdateDTO userUpdateDTO, MultipartFile profileImage) throws IOException {
-        User user = userDomainService.getUser(userId);
-
-        user.setNickname(userUpdateDTO.getNickname());
-        user.setStatusMessage(userUpdateDTO.getStatusMessage());
-
-        if (profileImage != null && !profileImage.isEmpty()) {
-            if (user.getProfileImageUrl() != null) {
-                File oldFile = new File(user.getProfileImageUrl());
-                if (oldFile.exists()) {
-                    oldFile.delete();
-                }
-            }
-
-            String profileImageUrl = saveProfileImage(profileImage);
-            user.setProfileImageUrl(profileImageUrl);
-        }
-
-        return userDomainService.saveUser(user);
-    }
-
-
 
     @Transactional
-    public UserUpdateDTO updateUser(String userId, UserUpdateDTO updateDTO) {
+    public UserInfoDTO updateUser(String userId, UserUpdateDTO updateDTO) {
         User exist = userDomainService.getUser(userId);
-        exist.setNickname(updateDTO.getNickname());
-        exist.setStatusMessage(updateDTO.getStatusMessage());
-        return null;
+        if (updateDTO.getNickname() != null && !updateDTO.getNickname().isEmpty()){
+            exist.setNickname(updateDTO.getNickname());
+        }
+
+        if (updateDTO.getNickname() != null && !updateDTO.getNickname().isEmpty()){
+            exist.setStatusMessage(updateDTO.getStatusMessage());
+        }
+        return userMapper.EntityToInfoDTO(exist);
     }
 
     public AccessInfoDTO verifyUser(LoginDTO dto){
@@ -160,6 +106,8 @@ public class UserAppService {
 
     @Transactional
     public void deleteUser(String userId) {
+        List<RefreshToken> refreshTokens = refreshTokenService.findByUserId(userId);
+        refreshTokenService.delete(refreshTokens);
         userDomainService.deleteUser(userId);
     }
 }

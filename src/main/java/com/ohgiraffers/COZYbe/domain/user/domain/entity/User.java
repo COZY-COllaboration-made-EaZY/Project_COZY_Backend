@@ -37,14 +37,4 @@ public class User extends BaseTimeEntity {
     @Column(name = "status_message", length = 255)
     private String statusMessage;
 
-//    @OneToMany(mappedBy = "owner", cascade = CascadeType.ALL, orphanRemoval = true)
-//    private List<Project> ownedProjects = new ArrayList<>();
-//
-//    // 사용자가 작성한 커뮤니티 글
-//    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
-//    private List<Community> communities = new ArrayList<>();
-//
-//    // 사용자가 작성한 계획
-//    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
-//    private List<Plan> plans = new ArrayList<>();
 }
