@@ -16,13 +16,6 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import org.springframework.web.multipart.MultipartFile;
-
-import java.io.File;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
 import java.util.*;
 
 @RequiredArgsConstructor
@@ -67,13 +60,9 @@ public class UserAppService {
         return !userDomainService.isEmailExist(email);
     }
 
-    public boolean verifyPassword(String userId, String inputPassword) {
+    public Boolean verifyPassword(String userId, String inputPassword) {
         User user = userDomainService.getUser(userId);
-
-        if (!passwordEncoder.matches(inputPassword, user.getPassword())) {
-            throw new IllegalArgumentException("비밀번호가 일치하지 않습니다.");
-        }
-        return true;
+        return passwordEncoder.matches(inputPassword, user.getPassword());
     }
 
 
