@@ -96,10 +96,11 @@ public class AuthService {
     }
 
     @Transactional
-    public void logout(String refreshToken) {
+    public ResponseCookie logout(String refreshToken) {
         Claims claims = jwtTokenProvider.decodeJwt(refreshToken);
         RefreshToken tokenEntity = refreshTokenService.findByTokenId(claims.getId());
         refreshTokenService.delete(tokenEntity);
+        return jwtTokenProvider.deleteRefreshCookie();
     }
 
 

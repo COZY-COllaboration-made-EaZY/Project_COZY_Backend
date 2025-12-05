@@ -20,6 +20,8 @@ public class JwtTokenProvider {
 
     private final JwtProperties properties;
 
+    private static final String REFRESH_COOKIE_NAME = "refreshToken";
+
     /**
      * 토큰생성
      * <pre>{@code
@@ -70,12 +72,22 @@ public class JwtTokenProvider {
     }
 
     public ResponseCookie createRefreshCookie(String refreshToken) {
-        return ResponseCookie.from("refreshToken", refreshToken)
+        return ResponseCookie.from(REFRESH_COOKIE_NAME, refreshToken)
                 .httpOnly(true)
                 .secure(true)
                 .sameSite("Strict")
                 .path("/")
                 .maxAge(properties.getRefreshDuration())
+                .build();
+    }
+
+    public ResponseCookie deleteRefreshCookie() {
+        return ResponseCookie.from(REFRESH_COOKIE_NAME, "")
+                .httpOnly(true)
+                .secure(true)
+                .sameSite("Strict")
+                .path("/")
+                .maxAge(0)  //ttl을 0으로 해서 바로 삭제되게
                 .build();
     }
 

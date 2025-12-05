@@ -7,6 +7,7 @@ import com.ohgiraffers.COZYbe.domain.auth.application.service.AuthService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -46,8 +47,8 @@ public class AuthController {
     public ResponseEntity<?> logout(
             @CookieValue(name = "refreshToken", required = false) String refreshToken
     ) {
-        authService.logout(refreshToken);
-        return ResponseEntity.ok().build();
+        ResponseCookie deleteCookie= authService.logout(refreshToken);
+        return ResponseEntity.ok().header(HttpHeaders.SET_COOKIE, deleteCookie.toString()).build();
     }
 
 
