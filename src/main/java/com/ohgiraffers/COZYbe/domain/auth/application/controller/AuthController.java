@@ -34,7 +34,7 @@ public class AuthController {
                 .body(new TokenWrapperDTO(authTokenDTO.accessToken()));
     }
 
-    @GetMapping("/refresh")
+    @PostMapping("/refresh")
     public ResponseEntity<?> refresh(
             @CookieValue(name = "refreshToken", required = false) String refreshToken
     ){
@@ -43,7 +43,7 @@ public class AuthController {
     }
 
 
-    @DeleteMapping("/logout")
+    @PostMapping("/logout")
     public ResponseEntity<?> logout(
             @CookieValue(name = "refreshToken", required = false) String refreshToken
     ) {
