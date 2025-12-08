@@ -31,6 +31,7 @@ public class UserController {
     @Operation(summary = "회원가입", description = "프로필 이미지는 디폴트 이미지로 자동 적용")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "성공적으로 처리 되었습니다."),
+            @ApiResponse(responseCode = "422", description = "이메일이 중복이거나 유효하지 않습니다."),
             @ApiResponse(responseCode = "500", description = "예상치 못한 예러")
     })
     @PostMapping("/register")
@@ -51,7 +52,12 @@ public class UserController {
     }
 
     @Operation(summary = "패스워드 재확인", description = "로그인된 유저의 패스워드 확인")
-    @PostMapping("/verify-password")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "성공적으로 처리 되었습니다."),
+            @ApiResponse(responseCode = "401", description = "로그인이 필요합니다."),
+            @ApiResponse(responseCode = "404", description = "해당 유저는 존재하지 않습니다."),
+            @ApiResponse(responseCode = "500", description = "예상치 못한 예러")
+    })
     public ResponseEntity<?> verifyPassword(
             @AuthenticationPrincipal Jwt jwt,
             @RequestBody LoginDTO loginDTO) {
@@ -64,6 +70,8 @@ public class UserController {
     @Operation(summary = "회원정보 수정", description = "null값은 무시됨")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "성공적으로 처리 되었습니다."),
+            @ApiResponse(responseCode = "401", description = "로그인이 필요합니다."),
+            @ApiResponse(responseCode = "404", description = "해당 유저는 존재하지 않습니다."),
             @ApiResponse(responseCode = "500", description = "예상치 못한 예러")
     })
     @PatchMapping("/update")
@@ -80,6 +88,8 @@ public class UserController {
     @Operation(summary = "현재 유저 정보")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "성공적으로 처리 되었습니다."),
+            @ApiResponse(responseCode = "401", description = "로그인이 필요합니다."),
+            @ApiResponse(responseCode = "404", description = "해당 유저는 존재하지 않습니다."),
             @ApiResponse(responseCode = "500", description = "예상치 못한 예러")
     })
     @GetMapping("/check-current")
@@ -92,6 +102,8 @@ public class UserController {
     @Operation(summary = "회원탈퇴")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "성공적으로 처리 되었습니다."),
+            @ApiResponse(responseCode = "401", description = "로그인이 필요합니다."),
+            @ApiResponse(responseCode = "404", description = "해당 유저는 존재하지 않습니다."),
             @ApiResponse(responseCode = "500", description = "예상치 못한 예러")
     })
     @DeleteMapping("/delete")
