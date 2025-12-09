@@ -14,10 +14,12 @@ import com.ohgiraffers.COZYbe.domain.user.domain.entity.User;
 import com.ohgiraffers.COZYbe.domain.user.domain.service.UserDomainService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import java.util.*;
 
+@Slf4j
 @RequiredArgsConstructor
 @Service
 public class UserAppService {
@@ -62,7 +64,11 @@ public class UserAppService {
 
     public Boolean verifyPassword(String userId, String inputPassword) {
         User user = userDomainService.getUser(userId);
-        return passwordEncoder.matches(inputPassword, user.getPassword());
+        Boolean isMatched = passwordEncoder.matches(inputPassword, user.getPassword());
+        if (!isMatched){
+            log.warn("verifying password failed : {}", user.getEmail());
+        }
+        return isMatched;
     }
 
 

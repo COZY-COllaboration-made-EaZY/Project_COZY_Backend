@@ -58,6 +58,7 @@ public class UserController {
             @ApiResponse(responseCode = "404", description = "해당 유저는 존재하지 않습니다."),
             @ApiResponse(responseCode = "500", description = "예상치 못한 예러")
     })
+    @PostMapping("/verify-password")
     public ResponseEntity<?> verifyPassword(
             @AuthenticationPrincipal Jwt jwt,
             @RequestBody LoginDTO loginDTO) {
@@ -74,7 +75,7 @@ public class UserController {
             @ApiResponse(responseCode = "404", description = "해당 유저는 존재하지 않습니다."),
             @ApiResponse(responseCode = "500", description = "예상치 못한 예러")
     })
-    @PatchMapping("/update")
+    @PostMapping("/update")
     public ResponseEntity<?> updateUser(
             @AuthenticationPrincipal Jwt jwt,
             @RequestBody UserUpdateDTO updateDTO
