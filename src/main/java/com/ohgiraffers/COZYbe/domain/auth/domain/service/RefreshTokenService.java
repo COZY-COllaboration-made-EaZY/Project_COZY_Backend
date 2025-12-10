@@ -7,6 +7,8 @@ import com.ohgiraffers.COZYbe.domain.auth.domain.repository.RefreshTokenReposito
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 @AllArgsConstructor
 @Service
 public class RefreshTokenService {
@@ -35,5 +37,12 @@ public class RefreshTokenService {
 
     public void delete(RefreshToken tokenEntity) {
         repository.delete(tokenEntity);
+    }
+    public void delete(List<RefreshToken> tokenEntity) {
+        repository.deleteAll(tokenEntity);
+    }
+
+    public List<RefreshToken> findByUserId(String userId) {
+        return repository.findByUserId(userId);
     }
 }
