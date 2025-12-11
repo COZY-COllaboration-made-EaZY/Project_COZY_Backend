@@ -1,5 +1,7 @@
 package com.ohgiraffers.COZYbe.domain.auth.application.service;
 
+import com.ohgiraffers.COZYbe.common.error.ApplicationException;
+import com.ohgiraffers.COZYbe.common.error.ErrorCode;
 import com.ohgiraffers.COZYbe.domain.auth.application.dto.AccessInfoDTO;
 import com.ohgiraffers.COZYbe.domain.auth.application.dto.TokenWrapperDTO;
 import com.ohgiraffers.COZYbe.domain.auth.application.dto.AuthDTO;
@@ -91,7 +93,10 @@ public class AuthService {
         Claims claims = jwtTokenProvider.decodeJwt(refreshToken);
         String userId = claims.getSubject();
         String jti = claims.getId();
-        RefreshToken tokenEntity = refreshTokenService.findByUserIdAndTokenId(userId, jti);  //로그아웃 되어있으면 여기서 걸림
+        RefreshToken tokenEntity = refreshTokenService.findByTokenId(jti);  //로그아웃 되어있으면 여기서 걸림
+        if (!tokenEntity.getUserId().equals(userId)){   //2중 체크
+            throw new ApplicationException(ErrorCode.INVALID_USER);
+        }
         return tokenEntity.getUserId();
     }
 
