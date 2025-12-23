@@ -1,9 +1,8 @@
-package com.ohgiraffers.COZYbe.domain.inquiry.entity;
+package com.ohgiraffers.COZYbe.domain.help.entity;
 
+import com.ohgiraffers.COZYbe.common.BaseTimeEntity;
 import jakarta.persistence.*;
 import lombok.*;
-
-import java.time.LocalDateTime;
 
 @Entity
 @Getter
@@ -11,12 +10,12 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@Table(name = "tbl_inquiry")
-public class Inquiry {
+@Table(name = "tbl_help")
+public class Help extends BaseTimeEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "inquiry_id")
+    @Column(name = "help_id")
     private Long id;
 
     @Column(name = "type", nullable = false, length = 50)
@@ -33,7 +32,4 @@ public class Inquiry {
 
     @Column(name = "status", nullable = false, length = 20)
     private String status;
-
-    @Column(name = "created_at", nullable = false)
-    private LocalDateTime createdAt;
 }
