@@ -1,6 +1,6 @@
 server:
   address: 0.0.0.0
-  port: 8000  # 서버 포트 설정
+  port: 18000  # 서버 포트 설정
   forward-headers-strategy: native  # 헤더 전달 전략 설정
 
 spring:

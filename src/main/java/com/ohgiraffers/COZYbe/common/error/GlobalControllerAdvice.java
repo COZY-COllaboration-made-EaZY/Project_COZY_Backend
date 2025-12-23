@@ -11,14 +11,24 @@ import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 
-
+/**
+ * 전역 예외 처리 <br>
+ * ApplicationException ErrorCode 확인
+ * */
 @Slf4j
 @RestControllerAdvice
 public class GlobalControllerAdvice {
 
+    /**
+     * 예상된, 의도된 Exception 처리
+     * enum ErrorCode 에 예외목록 등록되어있음
+     * */
     @ExceptionHandler(ApplicationException.class)
     public ResponseEntity<?> applicationHandler(ApplicationException e){
-        log.error("Error occurs {}", e.toString());
+        log.error("[{}] {} {}",
+                e.getErrorCode().getErrorCode() ,
+                e.getErrorCode().getStatus().value(),
+                e.getErrorCode().getMessage());
 
         Map<String,Object> data = new HashMap<>();
         data.put("status",e.getErrorCode().getStatus().value());
@@ -29,10 +39,14 @@ public class GlobalControllerAdvice {
         return ResponseEntity.status(e.getErrorCode().getStatus()).body(ApiUtils.error(data));
     }
 
+    /**
+     * 의도되지 않은 Exception 처리
+     * */
     @ExceptionHandler(Exception.class)
     public ResponseEntity<?> applicationHandler(Exception e){
         log.error("Unexpected Error occurs {}", e.getMessage());
 
+        e.printStackTrace();
         ErrorCode error = ErrorCode.INTERNAL_SERVER_ERROR;
 
         Map<String,Object> data = new HashMap<>();
