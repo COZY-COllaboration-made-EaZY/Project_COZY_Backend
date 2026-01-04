@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+    <!-- Spring Boot에서 사용하는 기본 패턴과 컬러 설정을 사용하기 위해 Spring Boot의 로그 확장을 활성화 -->
+    <include resource="org/springframework/boot/logging/logback/defaults.xml"/>
+
+    <!-- logback/defaults.xml 에서 그대로 가져와서 `%wEx{5}`만 수정 -->
+    <property name="LOG_EXCEPTION_CONVERSION_WORD" value="%ex{5}"/>
+    <property name="CONSOLE_LOG_PATTERN"
+              value="%clr(%d{${LOG_DATEFORMAT_PATTERN:-yyyy-MM-dd'T'HH:mm:ss.SSSXXX}}){faint} %clr(${LOG_LEVEL_PATTERN:-%5p}){} %clr(${PID:-}){magenta} %clr(--- %esb(){APPLICATION_NAME}%esb{APPLICATION_GROUP}[%15.15t] ${LOG_CORRELATION_PATTERN:-}){faint}%clr(%-40.40logger{39}){cyan} %clr(:){faint} %m%n${LOG_EXCEPTION_CONVERSION_WORD}"/>
+
+
+    <!-- 콘솔 로그 -->
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>${CONSOLE_LOG_PATTERN}</pattern>
+            <charset>UTF-8</charset>
+        </encoder>
+    </appender>
+
+
+    <!-- 로그 파일이 저장될 디렉토리 설정 -->
+    <property name="LOG_PATH" value="./logs"/>
+
+    <!-- 전체 로그 -->
+    <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <append>true</append>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>${LOG_PATH}/Log_%d{yyyy-MM-dd}.log</fileNamePattern>
+            <maxHistory>30</maxHistory>
+        </rollingPolicy>
+        <encoder>
+            <pattern>
+                %d{yyyy-MM-dd HH:mm:ss.SSS} %-5level ${PID} --- [%thread] %logger{40} : %msg%n%ex{5}
+            </pattern>
+            <charset>UTF-8</charset>
+        </encoder>
+    </appender>
+
+
+    <!-- 에러 로그 -->
+    <appender name="ERROR_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <append>true</append>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>${LOG_PATH}/Error_%d{yyyy-MM-dd}.log</fileNamePattern>
+            <maxHistory>30</maxHistory>
+        </rollingPolicy>
+
+        <encoder>
+            <pattern>
+                %d{yyyy-MM-dd HH:mm:ss.SSS} %-5level ${PID} --- [%thread] %logger{40} : %msg%n%ex{5}
+            </pattern>
+            <charset>UTF-8</charset>
+        </encoder>
+
+        <filter class="ch.qos.logback.classic.filter.LevelFilter">
+            <level>ERROR</level>
+            <onMatch>ACCEPT</onMatch>
+            <onMismatch>DENY</onMismatch>
+        </filter>
+    </appender>
+
+
+    <!-- 비동기 처리를 위한 AsyncAppender 설정 -->
+    <!-- 비동기 - 전체 로그 -->
+    <appender name="ASYNC_FILE" class="ch.qos.logback.classic.AsyncAppender">
+        <appender-ref ref="FILE"/>
+        <queueSize>10000</queueSize>
+        <discardingThreshold>0</discardingThreshold>
+        <neverBlock>true</neverBlock>
+    </appender>
+
+    <!-- 비동기 - 에러 로그 -->
+    <appender name="ASYNC_ERROR" class="ch.qos.logback.classic.AsyncAppender">
+        <appender-ref ref="ERROR_FILE"/>
+        <queueSize>10000</queueSize>
+        <discardingThreshold>0</discardingThreshold>
+        <neverBlock>true</neverBlock>
+    </appender>
+
+    <root level="INFO">
+        <appender-ref ref="CONSOLE"/>
+        <appender-ref ref="ASYNC_FILE"/>
+        <appender-ref ref="ASYNC_ERROR"/>
+    </root>
+</configuration>

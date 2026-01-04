@@ -40,13 +40,12 @@ public class GlobalControllerAdvice {
     }
 
     /**
-     * 의도되지 않은 Exception 처리
+     * 의도되지 않은, 예상치 못한 Exception 처리
      * */
     @ExceptionHandler(Exception.class)
     public ResponseEntity<?> applicationHandler(Exception e){
-        log.error("Unexpected Error occurs {}", e.getMessage());
+        log.error("Unexpected Error occurs.", e);
 
-        e.printStackTrace();
         ErrorCode error = ErrorCode.INTERNAL_SERVER_ERROR;
 
         Map<String,Object> data = new HashMap<>();
