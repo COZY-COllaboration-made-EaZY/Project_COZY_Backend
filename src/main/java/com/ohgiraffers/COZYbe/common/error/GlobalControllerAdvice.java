@@ -44,11 +44,8 @@ public class GlobalControllerAdvice {
      * */
     @ExceptionHandler(Exception.class)
     public ResponseEntity<?> applicationHandler(Exception e){
-        log.error("Unexpected Error occurs. Message : {}", e.getMessage());
-        StackTraceElement[] stack = e.getStackTrace();            //StackTrace 5줄만 출력
-        for (int i = 0; i < Math.min(5, stack.length); i++) {
-            log.error("at {}", stack[i]);
-        }
+        log.error("Unexpected Error occurs.", e);
+
         ErrorCode error = ErrorCode.INTERNAL_SERVER_ERROR;
 
         Map<String,Object> data = new HashMap<>();

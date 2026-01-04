@@ -11,9 +11,9 @@ import org.springframework.data.redis.repository.configuration.EnableRedisReposi
 @SpringBootApplication
 public class COZYApplication {
 
+
     public static void main(String[] args) {
         SpringApplication.run(COZYApplication.class, args);
-        System.out.println("Swagger url : http://localhost:8000/swagger-ui/index.html");
     }
 
 }

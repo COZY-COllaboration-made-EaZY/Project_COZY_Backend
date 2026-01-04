@@ -45,3 +45,6 @@ out/
 
 # macOS
 **/.DS_Store
+
+# log folder
+/logs
