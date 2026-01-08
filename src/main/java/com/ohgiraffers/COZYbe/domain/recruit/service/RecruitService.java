@@ -1,9 +1,14 @@
 package com.ohgiraffers.COZYbe.domain.recruit.service;
 
+import com.ohgiraffers.COZYbe.common.error.ApplicationException;
+import com.ohgiraffers.COZYbe.common.error.ErrorCode;
 import com.ohgiraffers.COZYbe.domain.recruit.dto.RecruitCreateDTO;
+import com.ohgiraffers.COZYbe.domain.recruit.dto.RecruitListResponse;
 import com.ohgiraffers.COZYbe.domain.recruit.dto.RecruitUpdateDTO;
 import com.ohgiraffers.COZYbe.domain.recruit.entity.Recruit;
 import com.ohgiraffers.COZYbe.domain.recruit.repository.RecruitRepository;
+import com.ohgiraffers.COZYbe.domain.teams.domain.entity.Team;
+import com.ohgiraffers.COZYbe.domain.teams.domain.repository.TeamRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -18,20 +23,37 @@ import java.util.List;
 public class RecruitService {
 
     private final RecruitRepository recruitRepository;
+    private final TeamRepository teamRepository;
 
-    public List<Recruit> findAll() {
-        return recruitRepository.findAll();
+    @Transactional
+    public List<RecruitListResponse> findAll() {
+        return recruitRepository.findAllWithTeam().stream()
+                .map(recruit -> new RecruitListResponse(
+                        recruit.getRecruitId(),
+                        recruit.getTitle(),
+                        recruit.getNickName(),
+                        recruit.getRecruitText(),
+                        recruit.getTeam().getTeamName(),
+                        recruit.getTeam().getTeamId().toString(),
+                        recruit.getCreatedAt()
+                ))
+                .toList();
     }
 
     @Transactional
-    public Recruit createRecruit(String title, String nickName, String recruitText, String writer){
+    public void createRecruit(RecruitCreateDTO dto, String writer) {
+        Team team = teamRepository.findById(dto.teamId())
+                .orElseThrow(() -> new ApplicationException(ErrorCode.NO_SUCH_TEAM));
+
         Recruit recruit = Recruit.builder()
-                .title(title)
-                .nickName(nickName)
-                .recruitText(recruitText)
+                .title(dto.title())
+                .nickName(dto.nickName())
+                .recruitText(dto.recruitText())
                 .writer(writer)
+                .team(team)
                 .build();
-        return recruitRepository.save(recruit);
+
+        recruitRepository.save(recruit);
     }
 
     @Transactional

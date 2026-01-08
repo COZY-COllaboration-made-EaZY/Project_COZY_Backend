@@ -1,6 +1,7 @@
 package com.ohgiraffers.COZYbe.domain.recruit.controller;
 
 import com.ohgiraffers.COZYbe.domain.recruit.dto.RecruitCreateDTO;
+import com.ohgiraffers.COZYbe.domain.recruit.dto.RecruitListResponse;
 import com.ohgiraffers.COZYbe.domain.recruit.dto.RecruitUpdateDTO;
 import com.ohgiraffers.COZYbe.domain.recruit.entity.Recruit;
 import com.ohgiraffers.COZYbe.domain.recruit.service.RecruitService;
@@ -11,6 +12,9 @@ import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -26,20 +30,17 @@ public class RecruitController {
     private final JwtTokenProvider jwtTokenProvider;
 
     @GetMapping("/list")
-    public List<Recruit> getAll(){
-        return recruitService.findAll();
+    public ResponseEntity<List<RecruitListResponse>> getAll() {
+        return ResponseEntity.ok(recruitService.findAll());
     }
 
     @PostMapping("/create")
-    public Recruit create(@RequestBody RecruitCreateDTO req, HttpServletRequest servletRequest){
-        String token = servletRequest.getHeader("Authorization").substring(7);
-        String writer = jwtTokenProvider.decodeUserIdFromJwt(token);
-        return recruitService.createRecruit(
-                req.getTitle(),
-                req.getNickName(),
-                req.getRecruitText(),
-                writer
-        );
+    public ResponseEntity<Void> createRecruit(
+            @RequestBody RecruitCreateDTO dto,
+            @AuthenticationPrincipal Jwt user
+    ) {
+        recruitService.createRecruit(dto, user.getId());
+        return ResponseEntity.ok().build();
     }
 
     @PutMapping("/{id}")

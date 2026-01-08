@@ -1,6 +1,7 @@
 package com.ohgiraffers.COZYbe.domain.recruit.entity;
 
 import com.ohgiraffers.COZYbe.common.BaseTimeEntity;
+import com.ohgiraffers.COZYbe.domain.teams.domain.entity.Team;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -30,5 +31,8 @@ public class Recruit extends BaseTimeEntity {
     @Column(name = "writer", nullable = false, length = 50)
     private String writer;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "team_id", nullable = false)
+    private Team team;
 
 }
