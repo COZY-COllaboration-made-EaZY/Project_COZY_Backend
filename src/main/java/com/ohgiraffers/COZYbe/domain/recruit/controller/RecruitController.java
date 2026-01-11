@@ -1,6 +1,7 @@
 package com.ohgiraffers.COZYbe.domain.recruit.controller;
 
 import com.ohgiraffers.COZYbe.domain.recruit.dto.RecruitCreateDTO;
+import com.ohgiraffers.COZYbe.domain.recruit.dto.RecruitDetailResponse;
 import com.ohgiraffers.COZYbe.domain.recruit.dto.RecruitListResponse;
 import com.ohgiraffers.COZYbe.domain.recruit.dto.RecruitUpdateDTO;
 import com.ohgiraffers.COZYbe.domain.recruit.entity.Recruit;
@@ -32,6 +33,11 @@ public class RecruitController {
     @GetMapping("/list")
     public ResponseEntity<List<RecruitListResponse>> getAll() {
         return ResponseEntity.ok(recruitService.findAll());
+    }
+
+    @GetMapping("/{id}")
+    public RecruitDetailResponse getDetail(@PathVariable Long id) {
+        return recruitService.getDetail(id);
     }
 
     @PostMapping("/create")

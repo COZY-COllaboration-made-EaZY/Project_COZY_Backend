@@ -19,6 +19,7 @@ public enum ErrorCode {
     NOT_ALLOWED(HttpStatus.FORBIDDEN, "AUTH-001", "허가되지 않은 접근."),
     ANONYMOUS_USER(HttpStatus.UNAUTHORIZED, "AUTH-002", "로그인이 필요합니다."),
     NO_SUCH_TEAM(HttpStatus.NOT_FOUND, "TEAM-001", "존재하지 않는 팀."),
+    NO_SUCH_RECRUIT(HttpStatus.NOT_FOUND,"RECRUIT-001","존재하지 않는 모집"),
     NO_SUCH_MEMBER(HttpStatus.NOT_FOUND, "MEMBER-001", "존재하지 않는 멤버."),
     NO_SUCH_PROJECT(HttpStatus.NOT_FOUND, "PROJECT-001","존재하지 않는 프로젝트"),
     NO_SUCH_JOIN_REQUEST(HttpStatus.NOT_FOUND, "JOIN-001", "존재하지 않는 가입 요청."),

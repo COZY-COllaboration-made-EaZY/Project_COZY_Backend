@@ -74,7 +74,7 @@ public class JoinRequestController {
             @ApiResponse(responseCode = "409", description = "이미 처리된 요청입니다."),
             @ApiResponse(responseCode = "500", description = "예상치 못한 에러")
     })
-    @PatchMapping("/{requestId}/approve")
+    @PostMapping("/{requestId}/approve")
     public ResponseEntity<?> approveRequest(
             @PathVariable String requestId,
             @AuthenticationPrincipal Jwt jwt) {
@@ -90,7 +90,7 @@ public class JoinRequestController {
             @ApiResponse(responseCode = "409", description = "이미 처리된 요청입니다."),
             @ApiResponse(responseCode = "500", description = "예상치 못한 에러")
     })
-    @PatchMapping("/{requestId}/reject")
+    @PostMapping("/{requestId}/reject")
     public ResponseEntity<?> rejectRequest(
             @PathVariable String requestId,
             @AuthenticationPrincipal Jwt jwt) {
