@@ -26,9 +26,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class RecruitController {
 
-    private static final Logger log = LoggerFactory.getLogger(RecruitController.class);
     private final RecruitService recruitService;
-    private final JwtTokenProvider jwtTokenProvider;
 
     @GetMapping("/list")
     public ResponseEntity<List<RecruitListResponse>> getAll() {
@@ -50,21 +48,17 @@ public class RecruitController {
     }
 
     @PutMapping("/{id}")
-    public Recruit updateRecruit(@PathVariable Long id,
-                                 @RequestBody @Valid RecruitUpdateDTO dto,
-                                 HttpServletRequest servletRequest){
-        String token = servletRequest.getHeader("Authorization").substring(7);
-        String userId = jwtTokenProvider.decodeUserIdFromJwt(token);
-        log.info("Update Recruit");
-        return recruitService.updateRecruit(id,dto,userId);
+    public ResponseEntity<Void> updateRecruit(
+            @PathVariable Long id,
+            @RequestBody @Valid RecruitUpdateDTO dto
+    ) {
+        recruitService.updateRecruit(id, dto);
+        return ResponseEntity.noContent().build();
     }
 
     @DeleteMapping("/{id}")
-    public void deletedRecruit(@PathVariable Long id, HttpServletRequest req) {
-        String auth = req.getHeader("Authorization");
-        String userId = jwtTokenProvider.decodeUserIdFromJwt(auth.substring(7));
-        log.info("Deleted Recruit");
-        recruitService.deleteRecruit(id, userId);
+    public void deletedRecruit(@PathVariable Long id) {
+        recruitService.deleteRecruit(id);
     }
 
 

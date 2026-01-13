@@ -50,8 +50,6 @@ public class RecruitService {
         System.out.println("팀이름 :: " + recruit.getTeam().getTeamName());
 
         Team team = recruit.getTeam();
-        System.out.println("teamName :: " + team.getTeamName());
-        System.out.println("teamId :: " + team.getTeamId());
         return new RecruitDetailResponse(
                 recruit.getRecruitId(),
                 recruit.getTitle(),
@@ -67,8 +65,6 @@ public class RecruitService {
     public void createRecruit(RecruitCreateDTO dto, String writer) {
         Team team = teamRepository.findById(dto.teamId())
                 .orElseThrow(() -> new ApplicationException(ErrorCode.NO_SUCH_TEAM));
-        System.out.println("teamName :: " + team.getTeamName());
-        System.out.println("teamId :: " + team.getTeamId());
 
         Recruit recruit = Recruit.builder()
                 .title(dto.title())
@@ -82,16 +78,16 @@ public class RecruitService {
     }
 
     @Transactional
-    public Recruit updateRecruit(Long id, RecruitUpdateDTO dto, String writer){
+    public void updateRecruit(Long id, RecruitUpdateDTO dto) {
         Recruit recruit = recruitRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "not found"));
+
         recruit.setTitle(dto.getTitle());
         recruit.setRecruitText(dto.getRecruitText());
-        return recruit;
     }
 
     @Transactional
-    public void deleteRecruit(Long id, String writer){
+    public void deleteRecruit(Long id){
         Recruit recruit = recruitRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "not found"));
         recruitRepository.delete(recruit);
