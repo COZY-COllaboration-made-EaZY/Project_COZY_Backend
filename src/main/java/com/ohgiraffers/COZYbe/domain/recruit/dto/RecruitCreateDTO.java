@@ -8,8 +8,6 @@ public record RecruitCreateDTO(
         String title,
         String nickName,
         String recruitText,
-        UUID teamId,
-        String teamName
+        UUID teamId
 ) {
-
 }

@@ -3,12 +3,14 @@ package com.ohgiraffers.COZYbe.domain.recruit.service;
 import com.ohgiraffers.COZYbe.common.error.ApplicationException;
 import com.ohgiraffers.COZYbe.common.error.ErrorCode;
 import com.ohgiraffers.COZYbe.domain.recruit.dto.RecruitCreateDTO;
+import com.ohgiraffers.COZYbe.domain.recruit.dto.RecruitDetailResponse;
 import com.ohgiraffers.COZYbe.domain.recruit.dto.RecruitListResponse;
 import com.ohgiraffers.COZYbe.domain.recruit.dto.RecruitUpdateDTO;
 import com.ohgiraffers.COZYbe.domain.recruit.entity.Recruit;
 import com.ohgiraffers.COZYbe.domain.recruit.repository.RecruitRepository;
 import com.ohgiraffers.COZYbe.domain.teams.domain.entity.Team;
 import com.ohgiraffers.COZYbe.domain.teams.domain.repository.TeamRepository;
+import com.ohgiraffers.COZYbe.domain.user.domain.entity.User;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -41,6 +43,25 @@ public class RecruitService {
     }
 
     @Transactional
+    public RecruitDetailResponse getDetail(Long id) {
+
+        Recruit recruit = recruitRepository.findById(id)
+                .orElseThrow(() -> new ApplicationException(ErrorCode.NO_SUCH_RECRUIT));
+        System.out.println("팀이름 :: " + recruit.getTeam().getTeamName());
+
+        Team team = recruit.getTeam();
+        return new RecruitDetailResponse(
+                recruit.getRecruitId(),
+                recruit.getTitle(),
+                recruit.getRecruitText(),
+                recruit.getNickName(),
+                team.getTeamId().toString(),
+                team.getTeamName(),
+                recruit.getCreatedAt()
+        );
+    }
+
+    @Transactional
     public void createRecruit(RecruitCreateDTO dto, String writer) {
         Team team = teamRepository.findById(dto.teamId())
                 .orElseThrow(() -> new ApplicationException(ErrorCode.NO_SUCH_TEAM));
@@ -57,16 +78,16 @@ public class RecruitService {
     }
 
     @Transactional
-    public Recruit updateRecruit(Long id, RecruitUpdateDTO dto, String writer){
+    public void updateRecruit(Long id, RecruitUpdateDTO dto) {
         Recruit recruit = recruitRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "not found"));
+
         recruit.setTitle(dto.getTitle());
         recruit.setRecruitText(dto.getRecruitText());
-        return recruit;
     }
 
     @Transactional
-    public void deleteRecruit(Long id, String writer){
+    public void deleteRecruit(Long id){
         Recruit recruit = recruitRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "not found"));
         recruitRepository.delete(recruit);

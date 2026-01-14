@@ -57,7 +57,7 @@ public class SecurityConfig {
         // 개발용 와일드카드 (원하면 제거 가능)
         config.addAllowedOriginPattern("*");
 
-        config.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        config.setAllowedMethods(Arrays.asList("GET", "POST", "PATCH", "PUT", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type"));
         config.setAllowCredentials(true);
 

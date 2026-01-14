@@ -1,6 +1,7 @@
 package com.ohgiraffers.COZYbe.domain.recruit.controller;
 
 import com.ohgiraffers.COZYbe.domain.recruit.dto.RecruitCreateDTO;
+import com.ohgiraffers.COZYbe.domain.recruit.dto.RecruitDetailResponse;
 import com.ohgiraffers.COZYbe.domain.recruit.dto.RecruitListResponse;
 import com.ohgiraffers.COZYbe.domain.recruit.dto.RecruitUpdateDTO;
 import com.ohgiraffers.COZYbe.domain.recruit.entity.Recruit;
@@ -25,13 +26,16 @@ import java.util.List;
 @RequiredArgsConstructor
 public class RecruitController {
 
-    private static final Logger log = LoggerFactory.getLogger(RecruitController.class);
     private final RecruitService recruitService;
-    private final JwtTokenProvider jwtTokenProvider;
 
     @GetMapping("/list")
     public ResponseEntity<List<RecruitListResponse>> getAll() {
         return ResponseEntity.ok(recruitService.findAll());
+    }
+
+    @GetMapping("/{id}")
+    public RecruitDetailResponse getDetail(@PathVariable Long id) {
+        return recruitService.getDetail(id);
     }
 
     @PostMapping("/create")
@@ -44,21 +48,17 @@ public class RecruitController {
     }
 
     @PutMapping("/{id}")
-    public Recruit updateRecruit(@PathVariable Long id,
-                                 @RequestBody @Valid RecruitUpdateDTO dto,
-                                 HttpServletRequest servletRequest){
-        String token = servletRequest.getHeader("Authorization").substring(7);
-        String userId = jwtTokenProvider.decodeUserIdFromJwt(token);
-        log.info("Update Recruit");
-        return recruitService.updateRecruit(id,dto,userId);
+    public ResponseEntity<Void> updateRecruit(
+            @PathVariable Long id,
+            @RequestBody @Valid RecruitUpdateDTO dto
+    ) {
+        recruitService.updateRecruit(id, dto);
+        return ResponseEntity.noContent().build();
     }
 
     @DeleteMapping("/{id}")
-    public void deletedRecruit(@PathVariable Long id, HttpServletRequest req) {
-        String auth = req.getHeader("Authorization");
-        String userId = jwtTokenProvider.decodeUserIdFromJwt(auth.substring(7));
-        log.info("Deleted Recruit");
-        recruitService.deleteRecruit(id, userId);
+    public void deletedRecruit(@PathVariable Long id) {
+        recruitService.deleteRecruit(id);
     }
 
 
