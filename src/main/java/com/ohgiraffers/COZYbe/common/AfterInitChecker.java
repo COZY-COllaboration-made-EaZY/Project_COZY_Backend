@@ -45,7 +45,7 @@ public class AfterInitChecker {
             log.info("[REDIS] Redis connection OK");
             isRedisConnected = true;
         } catch (Exception e) {
-            log.error("[REDIS] Redis connection FAILED");
+            log.error("[REDIS] Redis connection FAILED", e);
         }
     }
 
