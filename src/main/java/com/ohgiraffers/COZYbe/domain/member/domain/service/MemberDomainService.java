@@ -84,4 +84,11 @@ public class MemberDomainService {
     private ApplicationException noMember() {
         return new ApplicationException(ErrorCode.NO_SUCH_MEMBER);
     }
+
+    public boolean isMemberOfTeam(String teamId, String userId) {
+        return repository.findByTeam_TeamIdAndUser_UserId(
+                UUID.fromString(teamId),
+                UUID.fromString(userId)
+        ).isPresent();
+    }
 }

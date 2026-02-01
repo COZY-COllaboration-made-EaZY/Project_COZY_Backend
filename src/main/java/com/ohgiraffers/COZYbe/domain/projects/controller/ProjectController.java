@@ -62,6 +62,7 @@ public class ProjectController {
     // 프로젝트 상세
     @GetMapping("/project-detail-info")
     public ResponseEntity<ProjectDetailResponse> getProjectDetailInfo(@RequestParam UUID projectId) {
+        System.out.println("projectId :: " + projectId);
         ProjectDetailResponse dto = projectService.getProjectDetailInfo(projectId);
         return ResponseEntity.ok(dto);
     }

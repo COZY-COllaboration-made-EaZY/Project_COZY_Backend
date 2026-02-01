@@ -49,7 +49,7 @@ public class TeamController {
             @ApiResponse(responseCode = "200", description = "성공적으로 처리 되었습니다."),
             @ApiResponse(responseCode = "500", description = "예상치 못한 예러")
     })
-    @GetMapping
+    @GetMapping("/get-team-detail-info")
     public ResponseEntity<?> getTeam(@RequestParam(value = "team") String teamId,
                         @AuthenticationPrincipal Jwt jwt){
         log.info("Request team detail by ID : {}", teamId);
@@ -77,6 +77,7 @@ public class TeamController {
     @DeleteMapping
     public ResponseEntity<?>  deleteTeam(@RequestParam(value = "team") String teamId,
                            @AuthenticationPrincipal Jwt jwt){
+        System.out.println("teamId ::" + teamId);
         teamAppService.deleteTeam(teamId, jwt.getSubject());
         return ResponseEntity.noContent().build();
     }

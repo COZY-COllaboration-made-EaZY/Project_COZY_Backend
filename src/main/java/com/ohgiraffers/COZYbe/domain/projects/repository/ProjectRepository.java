@@ -13,11 +13,15 @@ import java.util.UUID;
 public interface ProjectRepository extends JpaRepository<Project,UUID> {
     boolean existsByProjectName(String projectName);
 
-    List<Project> findAllByTeam_TeamId(UUID teamId);
-    Optional<Project> findByProjectId(UUID projectId);
     List<Project> findAllByTeam_TeamIdOrderByCreatedAtDesc(UUID teamId);
-    @EntityGraph(attributePaths = {"team","leader","subLeader"})
+
+    @EntityGraph(attributePaths = {
+            "team",
+            "team.leader",
+            "team.subLeader"
+    })
     Optional<Project> findWithAllByProjectId(UUID projectId);
+
 
 
 }

@@ -1,31 +1,12 @@
 package com.ohgiraffers.COZYbe.domain.task.dto;
 
-import jakarta.validation.constraints.NotBlank;
-import lombok.Getter;
-import lombok.Setter;
-import lombok.ToString;
+import java.util.UUID;
 
-// タスクを作る時に必要な情報。
-@Getter
-@Setter
-@ToString
-public class TaskDTO {
+public record TaskDTO(
+        UUID projectId,
+        String nickName,
+        String title,
+        String status,
+        String taskText
+) {}
 
-    private Long projectId;
-
-    // ニックネーム
-    @NotBlank
-    private String nickName;
-
-    // タイトル
-    @NotBlank
-    private String title;
-
-    // 状況
-    @NotBlank
-    private String status;
-
-    // 内容
-    @NotBlank
-    private String taskText;
-}
