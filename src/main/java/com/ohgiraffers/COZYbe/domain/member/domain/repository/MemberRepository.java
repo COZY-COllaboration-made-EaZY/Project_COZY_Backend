@@ -26,4 +26,7 @@ public interface MemberRepository extends JpaRepository<Member, UUID> {
 
     @Query("SELECT m.team.teamId FROM Member m WHERE m.user.userId = :userId")
     List<UUID> findTeamIdsByUserId(@Param("userId") UUID userId);
+
+    boolean existsByTeam_TeamIdAndUser_UserId(UUID teamId, UUID userId);
+
 }

@@ -2,11 +2,14 @@ package com.ohgiraffers.COZYbe.domain.projects.entity;
 
 import com.ohgiraffers.COZYbe.common.BaseTimeEntity;
 //import com.ohgiraffers.COZYbe.domain.task.entity.Task;
+import com.ohgiraffers.COZYbe.domain.task.entity.Task;
 import com.ohgiraffers.COZYbe.domain.teams.domain.entity.Team;
 import com.ohgiraffers.COZYbe.domain.user.domain.entity.User;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 @Entity
@@ -38,4 +41,11 @@ public class Project extends BaseTimeEntity {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "teamid", nullable = false)
     private Team team;
+
+    @OneToMany(
+            mappedBy = "project",
+            cascade = CascadeType.REMOVE,
+            orphanRemoval = true
+    )
+    private List<Task> tasks = new ArrayList<>();
 }

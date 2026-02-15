@@ -19,7 +19,7 @@
 
 
     <!-- 로그 파일이 저장될 디렉토리 설정 -->
-    <property name="LOG_PATH" value="./logs"/>
+    <property name="LOG_PATH" value="../logs"/>
 
     <!-- 전체 로그 -->
     <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">

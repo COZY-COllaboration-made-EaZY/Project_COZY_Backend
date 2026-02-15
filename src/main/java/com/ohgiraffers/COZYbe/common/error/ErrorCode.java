@@ -24,9 +24,10 @@ public enum ErrorCode {
     NO_SUCH_PROJECT(HttpStatus.NOT_FOUND, "PROJECT-001","존재하지 않는 프로젝트"),
     NO_SUCH_JOIN_REQUEST(HttpStatus.NOT_FOUND, "JOIN-001", "존재하지 않는 가입 요청."),
     NO_SUCH_HELP(HttpStatus.NOT_FOUND,"HELP-001","존재하지 않는 헬프"),
+    NO_SUCH_TASK(HttpStatus.NOT_FOUND,"TASK-001","존재하지 않는 테스크"),
     DUPLICATE_JOIN_REQUEST(HttpStatus.CONFLICT, "JOIN-002", "이미 요청한 팀입니다."),
     ALREADY_TEAM_MEMBER(HttpStatus.CONFLICT, "JOIN-003", "이미 가입한 팀입니다."),
-    REQUEST_ALREADY_PROCESSED(HttpStatus.CONFLICT, "JOIN-004", "이미 처리된 요청입니다.")
+    REQUEST_ALREADY_PROCESSED(HttpStatus.CONFLICT, "JOIN-004", "이미 처리된 요청입니다."),
     ;
 
     private HttpStatus status;

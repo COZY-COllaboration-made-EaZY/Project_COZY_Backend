@@ -18,9 +18,11 @@ public class Team extends BaseTimeEntity {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID teamId;
 
+    @Setter
     @Column(nullable = false, unique = true)
     private String teamName;
 
+    @Setter
     @Column(length = 2000)
     private String description;
 
@@ -28,8 +30,16 @@ public class Team extends BaseTimeEntity {
     @JoinColumn(nullable = false)
     private User leader;
 
+    @Setter
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn
     private User subLeader;
+
+    @Column
+    private Boolean isDisabled;
+
+    public void disableTeam(){
+        this.isDisabled = true;
+    }
 
 }

@@ -86,6 +86,7 @@ public class ProjectService {
     public ProjectDetailResponse getProjectDetailInfo(UUID projectId) {
         Project p = projectRepository.findWithAllByProjectId(projectId)
                 .orElseThrow(() -> new ApplicationException(ErrorCode.NO_SUCH_PROJECT));
+        Team team = p.getTeam();
 
         return ProjectDetailResponse.builder()
                 .projectId(p.getProjectId())
@@ -93,7 +94,10 @@ public class ProjectService {
                 .devInterest(p.getDevInterest())
                 .description(p.getDescription())
                 .gitHubUrl(p.getGitHubUrl())
-                .teamId(p.getTeam().getTeamId())
+                .teamId(team.getTeamId())
+                .leaderId(team.getLeader() != null ? team.getLeader().getUserId() : null)
+                .subLeaderId(team.getSubLeader() != null ? team.getSubLeader().getUserId() : null)
+                .leaderName(team.getLeader() != null ? team.getLeader().getNickname() : null)
                 .build();
     }
 
