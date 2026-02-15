@@ -78,7 +78,7 @@ public class TeamController {
     public ResponseEntity<?>  deleteTeam(@RequestParam(value = "team") String teamId,
                            @AuthenticationPrincipal Jwt jwt){
         System.out.println("teamId ::" + teamId);
-        teamAppService.deleteTeam(teamId, jwt.getSubject());
+        teamAppService.setTeamDeleted(teamId, jwt.getSubject());
         return ResponseEntity.noContent().build();
     }
 

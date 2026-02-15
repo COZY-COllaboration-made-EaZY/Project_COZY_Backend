@@ -64,6 +64,7 @@ public class TeamDomainService {
         return repository.save(team);
     }
 
+    @Deprecated
     public void deleteTeam(Team team) {
         repository.delete(team);
     }

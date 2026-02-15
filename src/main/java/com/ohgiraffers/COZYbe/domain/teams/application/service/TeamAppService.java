@@ -12,7 +12,6 @@ import com.ohgiraffers.COZYbe.domain.teams.application.dto.response.TeamNameDTO;
 import com.ohgiraffers.COZYbe.domain.teams.application.dto.response.TeamDetailDTO;
 import com.ohgiraffers.COZYbe.domain.teams.domain.entity.Team;
 import com.ohgiraffers.COZYbe.domain.teams.domain.service.TeamDomainService;
-import com.ohgiraffers.COZYbe.domain.user.domain.entity.User;
 import com.ohgiraffers.COZYbe.domain.user.domain.service.UserDomainService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -46,6 +45,7 @@ public class TeamAppService {
                 .teamName(createTeamDTO.teamName())
                 .description(createTeamDTO.description())
                 .leader(userDomainService.getReference(userId))
+                .isDisabled(false)
                 .build();
 
         Team created = domainService.saveTeam(newTeam);
@@ -64,40 +64,39 @@ public class TeamAppService {
         return mapper.entityToDetail(team);
     }
 
+    @Transactional
     public TeamDetailDTO updateTeam(UpdateTeamDTO updateDTO, String userId) {
         Team team = getIfLeader(updateDTO.teamId(), userId);
 
-        Team updated = domainService.saveTeam(
-                team.toBuilder()
-                        .teamName((updateDTO.teamName() == null || updateDTO.teamName().isEmpty())
-                                ? team.getTeamName()    //참(비었으면)
-                                : updateDTO.teamName()) //거짓(값이 있으면)
-                        .description((updateDTO.description() == null || updateDTO.description().isEmpty())
-                                ? team.getDescription()
-                                : updateDTO.description())
-                        .build()
-        );
+        if (updateDTO.teamName() != null && !updateDTO.teamName().isEmpty()) {
+            team.setTeamName(updateDTO.teamName());
+        }
 
-        return mapper.entityToDetail(updated);
+        if (updateDTO.description() != null && !updateDTO.description().isEmpty()) {
+            team.setDescription(updateDTO.description());
+        }
+
+        return mapper.entityToDetail(team);
     }
 
+    @Transactional
     public void updateSubLeader(UpdateSubLeaderDTO updateDTO, String leaderId) {
         Team team = getIfLeader(updateDTO.teamId(), leaderId);
         Member member = memberDomainService.getMember(updateDTO.teamId(),updateDTO.subLeaderId());
-        domainService.saveTeam(team.toBuilder()
-                .subLeader(member.getUser())
-                .build());
+        team.setSubLeader(member.getUser());
     }
 
-    public void deleteTeam(String teamId, String userId) {
-        Team team = getIfLeader(teamId, userId);
-        domainService.deleteTeam(team);
+    @Transactional
+    public void setTeamDeleted(String teamId, String userId) {
+        Team exist = getIfLeader(teamId, userId);
+        exist.disableTeam();
     }
 
 
     //Todo later: Elastic Search 로 변경
     public SearchResultDTO searchTeamByKeyword(String searchKeyword, Pageable pageable) {
         List<Team> teamList = domainService.searchByName(searchKeyword);
+        teamList.removeIf(Team::getIsDisabled);
         List<TeamNameDTO> dtoList = mapper.entityListToDto(teamList);
         return new SearchResultDTO(dtoList);
     }
@@ -105,6 +104,7 @@ public class TeamAppService {
     public SearchResultDTO searchTeamByUser(String userId) {
         List<UUID> teamIds = memberDomainService.findTeamIdsByUser(userId);
         List<Team> teams = domainService.getAllById(teamIds);
+        teams.removeIf(Team::getIsDisabled);
         List<TeamNameDTO> dtoList = mapper.entityListToDto(teams);
         return new SearchResultDTO(dtoList);
     }
@@ -124,6 +124,9 @@ public class TeamAppService {
      */
     private Team getIfLeader(String teamId, String userId) {
         Team team = domainService.getReference(teamId);
+        if (team.getIsDisabled()) {
+            throw new ApplicationException(ErrorCode.NO_SUCH_TEAM);
+        }
         if (team.getLeader().getUserId().toString().equals(userId)) {
             log.info("team ({}) : 리더 권한 승인", teamId);
             return team;
