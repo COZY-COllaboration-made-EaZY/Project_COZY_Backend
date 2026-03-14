@@ -19,7 +19,7 @@ public class AfterInitChecker {
     private final JdbcTemplate jdbcTemplate;
     private final StringRedisTemplate redisTemplate;
 
-    private boolean isMysqlConnected = false;
+    private boolean isDbConnected = false;
     private boolean isRedisConnected = false;
 
     @EventListener
@@ -28,13 +28,13 @@ public class AfterInitChecker {
     }
 
 
-    private void checkMySql() {
+    private void checkDatabase() {
         try {
             jdbcTemplate.queryForObject("SELECT 1", Integer.class);
-            log.info("[DB] MySQL connection OK");
-            isMysqlConnected = true;
+            log.info("[DB] Database connection OK");
+            isDbConnected = true;
         } catch (Exception e) {
-            log.error("[DB] MySQL connection FAILED");
+            log.error("[DB] Database connection FAILED");
         }
     }
 
@@ -55,7 +55,7 @@ public class AfterInitChecker {
         log.info("=============================================================");
         log.info("Spring Application initialising Complete");
         log.info("=============================================================");
-        checkMySql();
+        checkDatabase();
         checkRedis();
         printCheckResult();
     }
@@ -63,8 +63,8 @@ public class AfterInitChecker {
 
     private void printCheckResult(){
         System.out.println("\n ===== DB Connection Check Result ===== ");
-        System.out.print("MySQL Status :\t");
-        if (isMysqlConnected) {
+        System.out.print("DB Status :\t");
+        if (isDbConnected) {
             System.out.println("\u001B[32mSUCCESS\u001B[0m");
         }else {
             System.out.println("\u001B[31mFAILED\u001B[0m");

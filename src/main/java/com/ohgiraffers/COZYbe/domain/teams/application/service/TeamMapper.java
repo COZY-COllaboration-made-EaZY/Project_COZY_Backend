@@ -14,6 +14,8 @@ public interface TeamMapper {
     List<TeamNameDTO> entityListToDto(List<Team> teams);
 
     @Mapping(source = "leader.nickname", target = "leaderName")
+    @Mapping(source = "leader.userId", target = "leaderId")
+    @Mapping(source = "subLeader.userId", target = "subLeaderId")
     TeamDetailDTO entityToDetail(Team team);
 
 }

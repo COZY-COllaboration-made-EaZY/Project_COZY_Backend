@@ -33,15 +33,15 @@ public class HelpController {
 
     // Update Inquiry
     @PutMapping("/{id}")
-    public Help updateInquiry(@PathVariable Long id, @RequestBody UpdateHelpDTO dto) {
-        return helpService.updateHelp(id, dto);
+    public Help updateInquiry(@PathVariable Long id, @RequestBody UpdateHelpDTO dto, @AuthenticationPrincipal Jwt jwt) {
+        return helpService.updateHelp(id, dto, jwt);
     }
 
 
     // Deleted Inquiry
     @DeleteMapping("/{id}")
-    public void deleteInquiry(@PathVariable Long id) {
-        helpService.deleteHelp(id);
+    public void deleteInquiry(@PathVariable Long id, @AuthenticationPrincipal Jwt jwt) {
+        helpService.deleteHelp(id, jwt);
     }
 
 }

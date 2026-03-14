@@ -1,11 +1,17 @@
 package com.ohgiraffers.COZYbe.domain.teams.application.controller;
 
 import com.ohgiraffers.COZYbe.domain.teams.application.dto.request.CreateTeamDTO;
+import com.ohgiraffers.COZYbe.domain.teams.application.dto.request.DeleteTeamDTO;
+import com.ohgiraffers.COZYbe.domain.teams.application.dto.request.RequestDecisionDTO;
+import com.ohgiraffers.COZYbe.domain.teams.application.dto.request.TeamLeaveRequestDTO;
+import com.ohgiraffers.COZYbe.domain.teams.application.dto.request.TeamUpgradeRequestDTO;
 import com.ohgiraffers.COZYbe.domain.teams.application.dto.request.UpdateSubLeaderDTO;
 import com.ohgiraffers.COZYbe.domain.teams.application.dto.request.UpdateTeamDTO;
 import com.ohgiraffers.COZYbe.domain.teams.application.dto.response.SearchResultDTO;
 import com.ohgiraffers.COZYbe.domain.teams.application.dto.response.TeamDetailDTO;
+import com.ohgiraffers.COZYbe.domain.teams.application.dto.response.TeamStatsDTO;
 import com.ohgiraffers.COZYbe.domain.teams.application.service.TeamAppService;
+import com.ohgiraffers.COZYbe.domain.teams.application.service.TeamRequestService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -26,6 +32,7 @@ import org.springframework.web.bind.annotation.*;
 public class TeamController {
 
     private final TeamAppService teamAppService;
+    private final TeamRequestService teamRequestService;
 
     @GetMapping("/list")
     public ResponseEntity<?> getTeamList(){
@@ -76,9 +83,10 @@ public class TeamController {
     })
     @DeleteMapping
     public ResponseEntity<?>  deleteTeam(@RequestParam(value = "team") String teamId,
+                           @RequestBody DeleteTeamDTO deleteDTO,
                            @AuthenticationPrincipal Jwt jwt){
         System.out.println("teamId ::" + teamId);
-        teamAppService.setTeamDeleted(teamId, jwt.getSubject());
+        teamAppService.setTeamDeleted(teamId, jwt.getSubject(), deleteDTO.teamName(), deleteDTO.password());
         return ResponseEntity.noContent().build();
     }
 
@@ -121,6 +129,78 @@ public class TeamController {
     public ResponseEntity<?> updateSubLeader(@RequestBody UpdateSubLeaderDTO updateDTO,
                                              @AuthenticationPrincipal Jwt jwt) {
         teamAppService.updateSubLeader(updateDTO, jwt.getSubject());
+        return ResponseEntity.ok().build();
+    }
+
+    @Operation(summary = "팀 통계")
+    @GetMapping("/stats")
+    public ResponseEntity<?> getTeamStats(@RequestParam(value = "team") String teamId,
+                                          @AuthenticationPrincipal Jwt jwt) {
+        TeamStatsDTO stats = teamRequestService.getTeamStats(teamId, jwt.getSubject());
+        return ResponseEntity.ok(stats);
+    }
+
+    @Operation(summary = "부팀장 승급 신청")
+    @PostMapping("/upgrade-request")
+    public ResponseEntity<?> requestUpgrade(@RequestBody TeamUpgradeRequestDTO dto,
+                                            @AuthenticationPrincipal Jwt jwt) {
+        teamRequestService.requestUpgrade(dto, jwt.getSubject());
+        return ResponseEntity.ok().build();
+    }
+
+    @Operation(summary = "부팀장 승급 신청 목록 (리더용)")
+    @GetMapping("/upgrade-request")
+    public ResponseEntity<?> getUpgradeRequests(@RequestParam(value = "team") String teamId,
+                                                @AuthenticationPrincipal Jwt jwt) {
+        return ResponseEntity.ok(teamRequestService.getUpgradeRequests(teamId, jwt.getSubject()));
+    }
+
+    @Operation(summary = "부팀장 승급 승인")
+    @PatchMapping("/upgrade-request/{requestId}/approve")
+    public ResponseEntity<?> approveUpgrade(@PathVariable java.util.UUID requestId,
+                                            @AuthenticationPrincipal Jwt jwt) {
+        teamRequestService.approveUpgrade(requestId, jwt.getSubject());
+        return ResponseEntity.ok().build();
+    }
+
+    @Operation(summary = "부팀장 승급 거절")
+    @PatchMapping("/upgrade-request/{requestId}/reject")
+    public ResponseEntity<?> rejectUpgrade(@PathVariable java.util.UUID requestId,
+                                           @RequestBody(required = false) RequestDecisionDTO dto,
+                                           @AuthenticationPrincipal Jwt jwt) {
+        teamRequestService.rejectUpgrade(requestId, jwt.getSubject(), dto);
+        return ResponseEntity.ok().build();
+    }
+
+    @Operation(summary = "팀 탈퇴 요청")
+    @PostMapping("/leave-request")
+    public ResponseEntity<?> requestLeave(@RequestBody TeamLeaveRequestDTO dto,
+                                          @AuthenticationPrincipal Jwt jwt) {
+        teamRequestService.requestLeave(dto, jwt.getSubject());
+        return ResponseEntity.ok().build();
+    }
+
+    @Operation(summary = "팀 탈퇴 요청 목록 (리더용)")
+    @GetMapping("/leave-request")
+    public ResponseEntity<?> getLeaveRequests(@RequestParam(value = "team") String teamId,
+                                              @AuthenticationPrincipal Jwt jwt) {
+        return ResponseEntity.ok(teamRequestService.getLeaveRequests(teamId, jwt.getSubject()));
+    }
+
+    @Operation(summary = "팀 탈퇴 승인")
+    @PatchMapping("/leave-request/{requestId}/approve")
+    public ResponseEntity<?> approveLeave(@PathVariable java.util.UUID requestId,
+                                          @AuthenticationPrincipal Jwt jwt) {
+        teamRequestService.approveLeave(requestId, jwt.getSubject());
+        return ResponseEntity.ok().build();
+    }
+
+    @Operation(summary = "팀 탈퇴 거절")
+    @PatchMapping("/leave-request/{requestId}/reject")
+    public ResponseEntity<?> rejectLeave(@PathVariable java.util.UUID requestId,
+                                         @RequestBody(required = false) RequestDecisionDTO dto,
+                                         @AuthenticationPrincipal Jwt jwt) {
+        teamRequestService.rejectLeave(requestId, jwt.getSubject(), dto);
         return ResponseEntity.ok().build();
     }
 

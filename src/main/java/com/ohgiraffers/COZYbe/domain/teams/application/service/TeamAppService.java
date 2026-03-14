@@ -4,6 +4,8 @@ import com.ohgiraffers.COZYbe.common.error.ApplicationException;
 import com.ohgiraffers.COZYbe.common.error.ErrorCode;
 import com.ohgiraffers.COZYbe.domain.member.domain.entity.Member;
 import com.ohgiraffers.COZYbe.domain.member.domain.service.MemberDomainService;
+import com.ohgiraffers.COZYbe.domain.member.domain.repository.MemberRepository;
+import com.ohgiraffers.COZYbe.domain.projects.repository.ProjectRepository;
 import com.ohgiraffers.COZYbe.domain.teams.application.dto.request.CreateTeamDTO;
 import com.ohgiraffers.COZYbe.domain.teams.application.dto.request.UpdateSubLeaderDTO;
 import com.ohgiraffers.COZYbe.domain.teams.application.dto.request.UpdateTeamDTO;
@@ -12,6 +14,7 @@ import com.ohgiraffers.COZYbe.domain.teams.application.dto.response.TeamNameDTO;
 import com.ohgiraffers.COZYbe.domain.teams.application.dto.response.TeamDetailDTO;
 import com.ohgiraffers.COZYbe.domain.teams.domain.entity.Team;
 import com.ohgiraffers.COZYbe.domain.teams.domain.service.TeamDomainService;
+import com.ohgiraffers.COZYbe.domain.user.application.service.UserAppService;
 import com.ohgiraffers.COZYbe.domain.user.domain.service.UserDomainService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -31,12 +34,25 @@ public class TeamAppService {
     private final TeamMapper mapper;
 
     private final MemberDomainService memberDomainService;
+    private final MemberRepository memberRepository;
+    private final ProjectRepository projectRepository;
     private final UserDomainService userDomainService;
+    private final UserAppService userAppService;
 
 
     public SearchResultDTO getAllList() {
         List<Team> teams = domainService.getAllTeams();
-        return new SearchResultDTO(mapper.entityListToDto(teams));
+        List<TeamNameDTO> dtoList = teams.stream()
+                .filter(team -> team != null && !Boolean.TRUE.equals(team.getIsDisabled()))
+                .map(team -> new TeamNameDTO(
+                        String.valueOf(team.getTeamId()),
+                        team.getTeamName(),
+                        team.getDescription(),
+                        null,
+                        null
+                ))
+                .toList();
+        return new SearchResultDTO(dtoList);
     }
 
     @Transactional
@@ -60,6 +76,9 @@ public class TeamAppService {
 
     public TeamDetailDTO getTeamDetail(String teamId, String userId) {
 
+        if (!memberDomainService.isMemberOfTeam(teamId, userId)) {
+            throw new ApplicationException(ErrorCode.NOT_ALLOWED);
+        }
         Team team = domainService.getTeam(teamId);
         return mapper.entityToDetail(team);
     }
@@ -87,8 +106,14 @@ public class TeamAppService {
     }
 
     @Transactional
-    public void setTeamDeleted(String teamId, String userId) {
-        Team exist = getIfLeader(teamId, userId);
+    public void setTeamDeleted(String teamId, String userId, String teamName, String password) {
+        Team exist = getIfLeaderOrSub(teamId, userId);
+        if (teamName == null || teamName.isBlank() || !teamName.equals(exist.getTeamName())) {
+            throw new ApplicationException(ErrorCode.INVALID_TEAM_NAME);
+        }
+        if (password == null || password.isBlank() || !userAppService.verifyPassword(userId, password)) {
+            throw new ApplicationException(ErrorCode.INVALID_PASSWORD);
+        }
         exist.disableTeam();
     }
 
@@ -97,15 +122,45 @@ public class TeamAppService {
     public SearchResultDTO searchTeamByKeyword(String searchKeyword, Pageable pageable) {
         List<Team> teamList = domainService.searchByName(searchKeyword);
         teamList.removeIf(Team::getIsDisabled);
-        List<TeamNameDTO> dtoList = mapper.entityListToDto(teamList);
+        List<TeamNameDTO> dtoList = teamList.stream()
+                .filter(team -> team != null && !Boolean.TRUE.equals(team.getIsDisabled()))
+                .map(team -> new TeamNameDTO(
+                        String.valueOf(team.getTeamId()),
+                        team.getTeamName(),
+                        team.getDescription(),
+                        null,
+                        null
+                ))
+                .toList();
         return new SearchResultDTO(dtoList);
     }
 
     public SearchResultDTO searchTeamByUser(String userId) {
         List<UUID> teamIds = memberDomainService.findTeamIdsByUser(userId);
+        if (teamIds == null || teamIds.isEmpty()) {
+            return new SearchResultDTO(List.of());
+        }
+
         List<Team> teams = domainService.getAllById(teamIds);
-        teams.removeIf(Team::getIsDisabled);
-        List<TeamNameDTO> dtoList = mapper.entityListToDto(teams);
+        if (teams == null || teams.isEmpty()) {
+            return new SearchResultDTO(List.of());
+        }
+
+        teams.removeIf(team -> team == null || Boolean.TRUE.equals(team.getIsDisabled()));
+
+        List<TeamNameDTO> dtoList = teams.stream()
+                .map(team -> {
+                    long memberCount = memberRepository.countByTeam_TeamId(team.getTeamId());
+                    long projectCount = projectRepository.countByTeam_TeamId(team.getTeamId());
+                    return new TeamNameDTO(
+                            String.valueOf(team.getTeamId()),
+                            team.getTeamName(),
+                            team.getDescription(),
+                            Math.toIntExact(memberCount),
+                            Math.toIntExact(projectCount)
+                    );
+                })
+                .toList();
         return new SearchResultDTO(dtoList);
     }
 
@@ -132,6 +187,24 @@ public class TeamAppService {
             return team;
         }
         log.info("team ({}) : 리더 권한 거절", teamId);
+        throw new ApplicationException(ErrorCode.NOT_ALLOWED);
+    }
+
+    /**
+     * 팀 리더/서브리더인지 판단
+     */
+    private Team getIfLeaderOrSub(String teamId, String userId) {
+        Team team = domainService.getReference(teamId);
+        if (team.getIsDisabled()) {
+            throw new ApplicationException(ErrorCode.NO_SUCH_TEAM);
+        }
+        boolean isLeader = team.getLeader() != null && team.getLeader().getUserId().toString().equals(userId);
+        boolean isSubLeader = team.getSubLeader() != null && team.getSubLeader().getUserId().toString().equals(userId);
+        if (isLeader || isSubLeader) {
+            log.info("team ({}) : 리더/서브리더 권한 승인", teamId);
+            return team;
+        }
+        log.info("team ({}) : 리더/서브리더 권한 거절", teamId);
         throw new ApplicationException(ErrorCode.NOT_ALLOWED);
     }
 

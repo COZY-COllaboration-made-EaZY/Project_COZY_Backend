@@ -2,6 +2,8 @@ package com.ohgiraffers.COZYbe.domain.help.dto;
 
 public record UpdateHelpDTO(
         String title,
-        String content
+        String content,
+        String status,
+        String answer
 )
 { }

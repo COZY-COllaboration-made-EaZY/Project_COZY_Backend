@@ -36,6 +36,7 @@ public class AuthService {
     public AuthDTO login(LoginDTO loginDTO, String refreshToken) {
         AccessInfoDTO accessDTO = userAppService.verifyUser(loginDTO);
         String userId = accessDTO.userId().toString();
+        userAppService.updateLastLogin(userId);
         String reuseDeviceId = null;
         if (refreshToken != null && !refreshToken.trim().isEmpty()){     //브라우저 리프레시 토큰이 있나
             Claims claims = jwtTokenProvider.decodeJwt(refreshToken);   //브라우저 리프레시 토큰이 유효한가
@@ -86,6 +87,7 @@ public class AuthService {
     public TokenWrapperDTO reissueAccessToken(String refreshToken) {
         String userId = this.verifyRefreshToken(refreshToken);
         AccessInfoDTO accessInfoDTO = userAppService.verifyUser(userId);
+        userAppService.updateLastLogin(userId);
         return new TokenWrapperDTO(this.createAccessToken(accessInfoDTO));
     }
 

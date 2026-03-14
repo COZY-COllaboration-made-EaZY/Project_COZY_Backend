@@ -34,4 +34,7 @@ public class JoinRequest extends BaseTimeEntity {
     @Column(length = 500)
     private String message;
 
+    @Column(length = 500)
+    private String rejectReason;
+
 }

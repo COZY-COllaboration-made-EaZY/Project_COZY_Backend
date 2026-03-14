@@ -14,7 +14,7 @@ import java.util.UUID;
 public class FileService {
 
     private static final String UPLOAD_DIR = "uploads/profile_images";
-    private static final String DEFAULT_IMAGE_DIR = UPLOAD_DIR + "Default_Profile.png";
+    private static final String DEFAULT_IMAGE_DIR = "profile_images/Default_Profile.png";
 
     public String getDefaultProfileImageDir(){
         return DEFAULT_IMAGE_DIR;
@@ -41,7 +41,7 @@ public class FileService {
 
 
     // 프로필 이미지 저장
-    private String saveProfileImage(MultipartFile file) throws IOException {
+    public String saveProfileImage(MultipartFile file) throws IOException {
         File uploadDir = new File(UPLOAD_DIR);
         if (!uploadDir.exists()) {
             uploadDir.mkdirs();
@@ -58,6 +58,6 @@ public class FileService {
         Path filePath = Path.of(UPLOAD_DIR, newFileName);
         Files.copy(file.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
 
-        return UPLOAD_DIR + newFileName;
+        return "profile_images/" + newFileName;
     }
 }

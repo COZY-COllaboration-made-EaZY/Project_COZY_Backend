@@ -23,14 +23,14 @@ spring:
     import: optional:file:.env[.properties]  # `.env` 파일에서 환경 변수 가져오기
 
   datasource:
-    driver-class-name: com.mysql.cj.jdbc.Driver  # MySQL 드라이버 설정
-    url: ${MYSQL_URL}  # MySQL 연결 URL (환경 변수에서 가져옴)
-    username: ${MYSQL_USER}  # MySQL 사용자명 (환경 변수에서 가져옴)
-    password: ${MYSQL_PASSWORD}  # MySQL 비밀번호 (환경 변수에서 가져옴)
+    driver-class-name: org.postgresql.Driver  # PostgreSQL 드라이버 설정
+    url: ${POSTGRES_URL:}  # PostgreSQL 연결 URL (환경 변수에서 가져옴)
+    username: ${POSTGRES_USER:}  # PostgreSQL 사용자명 (환경 변수에서 가져옴)
+    password: ${POSTGRES_PASSWORD:}  # PostgreSQL 비밀번호 (환경 변수에서 가져옴)
 
   jpa:
     show-sql: true  # 실행된 SQL 쿼리 출력
-    database: mysql  # 데이터베이스 타입 설정
+    database: postgresql  # 데이터베이스 타입 설정
     hibernate:
       ddl-auto: update  # 스키마 자동 업데이트
     properties:
@@ -65,4 +65,3 @@ logging:
     org.hibernate.orm.connections.pooling: error  # ← "Database info:" 여기서 나옵니다
     com.zaxxer.hikari: error                      # HikariCP 시작/연결 로그 숨김
     org.springframework.boot.autoconfigure.orm.jpa: error # open-in-view 경고 숨김
-

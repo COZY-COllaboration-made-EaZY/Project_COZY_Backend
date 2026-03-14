@@ -21,16 +21,22 @@ public class JwtWhiteListHolder {
             "/swagger-ui/**",
             "/swagger-ui.html",
 
+            // Public static resources (profile images)
+            "/profile_images/**",
+            "/uploads/**",
+            "/api/files/profile/**",
+
             // Plan & Inquiry
             "/api/inquiries/list",
             "/api/plan/list",
             "/api/plan/{id}",
-            "/api/plan/by-nickname"
+            "/api/plan/by-nickname",
+
+            // Help (public list)
+            "/api/help/list"
     };
 
     public String[] getWhiteList(){
         return WHITE_LIST;
     }
 }
-
-

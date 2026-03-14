@@ -9,6 +9,7 @@ import com.ohgiraffers.COZYbe.domain.auth.domain.service.RefreshTokenService;
 import com.ohgiraffers.COZYbe.domain.files.service.FileService;
 import com.ohgiraffers.COZYbe.domain.user.application.dto.SignUpDTO;
 import com.ohgiraffers.COZYbe.domain.user.application.dto.UserInfoDTO;
+import com.ohgiraffers.COZYbe.domain.user.application.dto.UserSettingsDTO;
 import com.ohgiraffers.COZYbe.domain.user.application.dto.UserUpdateDTO;
 import com.ohgiraffers.COZYbe.domain.user.domain.entity.User;
 import com.ohgiraffers.COZYbe.domain.user.domain.service.UserDomainService;
@@ -17,7 +18,9 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 import java.util.*;
+import java.time.LocalDateTime;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -58,6 +61,18 @@ public class UserAppService {
         return userMapper.EntityToInfoDTO(user);
     }
 
+    public UserSettingsDTO getUserSettings(String userId) {
+        User user = userDomainService.getUser(userId);
+        return new UserSettingsDTO(
+                user.getThemeMode(),
+                user.getNotificationsEmail(),
+                user.getNotificationsPush(),
+                user.getDigestWeekly(),
+                user.getProfileVisible(),
+                user.getLocale()
+        );
+    }
+
     public boolean isEmailAvailable(String email) {
         return !userDomainService.isEmailExist(email);
     }
@@ -73,20 +88,63 @@ public class UserAppService {
 
 
     @Transactional
-    public UserInfoDTO updateUser(String userId, UserUpdateDTO updateDTO) {
+    public UserInfoDTO updateUser(String userId, UserUpdateDTO updateDTO, MultipartFile profileImage) {
         User exist = userDomainService.getUser(userId);
         if (updateDTO.getNickname() != null && !updateDTO.getNickname().isEmpty()){
             exist.setNickname(updateDTO.getNickname());
         }
 
-        if (updateDTO.getNickname() != null && !updateDTO.getNickname().isEmpty()){
+        if (updateDTO.getStatusMessage() != null){
             exist.setStatusMessage(updateDTO.getStatusMessage());
+        }
+
+        if (profileImage != null && !profileImage.isEmpty()) {
+            try {
+                String profileImageUrl = fileService.saveProfileImage(profileImage);
+                exist.setProfileImageUrl(profileImageUrl);
+            } catch (Exception e) {
+                log.error("프로필 이미지 저장 실패", e);
+            }
         }
         return userMapper.EntityToInfoDTO(exist);
     }
 
+    @Transactional
+    public UserSettingsDTO updateUserSettings(String userId, UserSettingsDTO settingsDTO) {
+        User exist = userDomainService.getUser(userId);
+
+        if (settingsDTO.themeMode() != null) {
+            exist.setThemeMode(settingsDTO.themeMode());
+        }
+        if (settingsDTO.notificationsEmail() != null) {
+            exist.setNotificationsEmail(settingsDTO.notificationsEmail());
+        }
+        if (settingsDTO.notificationsPush() != null) {
+            exist.setNotificationsPush(settingsDTO.notificationsPush());
+        }
+        if (settingsDTO.digestWeekly() != null) {
+            exist.setDigestWeekly(settingsDTO.digestWeekly());
+        }
+        if (settingsDTO.profileVisible() != null) {
+            exist.setProfileVisible(settingsDTO.profileVisible());
+        }
+        if (settingsDTO.locale() != null) {
+            exist.setLocale(settingsDTO.locale());
+        }
+
+        return new UserSettingsDTO(
+                exist.getThemeMode(),
+                exist.getNotificationsEmail(),
+                exist.getNotificationsPush(),
+                exist.getDigestWeekly(),
+                exist.getProfileVisible(),
+                exist.getLocale()
+        );
+    }
+
     public AccessInfoDTO verifyUser(LoginDTO dto){
         User user = userDomainService.getUserByEmail(dto.getEmail());
+        ensureNotBlocked(user);
         if (!passwordEncoder.matches(dto.getPassword(), user.getPassword())) {
             throw new ApplicationException(ErrorCode.INVALID_PASSWORD);
         }
@@ -95,7 +153,14 @@ public class UserAppService {
 
     public AccessInfoDTO verifyUser(String userId){
         User user = userDomainService.getUser(userId);
+        ensureNotBlocked(user);
         return userMapper.EntityToAccessInfoDTO(user);
+    }
+
+    @Transactional
+    public void updateLastLogin(String userId) {
+        User user = userDomainService.getUser(userId);
+        user.setLastLoginAt(LocalDateTime.now());
     }
 
 
@@ -104,5 +169,11 @@ public class UserAppService {
         List<RefreshToken> refreshTokens = refreshTokenService.findByUserId(userId);
         refreshTokenService.delete(refreshTokens);
         userDomainService.deleteUser(userId);
+    }
+
+    private void ensureNotBlocked(User user) {
+        if (Boolean.TRUE.equals(user.getBlocked())) {
+            throw new ApplicationException(ErrorCode.NOT_ALLOWED);
+        }
     }
 }

@@ -24,9 +24,12 @@ public class MemberAppService {
     private final MemberMapper mapper;
 
 
-    public MemberListDTO getMemberList(String teamId) {
+    public MemberListDTO getMemberList(String teamId, String currentUserId) {
         if (!teamDomainService.isTeamExist(teamId)) {
             throw new ApplicationException(ErrorCode.NO_SUCH_TEAM);
+        }
+        if (!domainService.isMemberOfTeam(teamId, currentUserId)) {
+            throw new ApplicationException(ErrorCode.NOT_ALLOWED);
         }
         List<Member> members = domainService.findByTeam(teamId);
         return new MemberListDTO(mapper.entityListToDto(members));

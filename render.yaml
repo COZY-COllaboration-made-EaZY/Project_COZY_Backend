@@ -1,0 +1,28 @@
+services:
+  - type: web
+    name: cozy-backend
+    env: java
+    region: oregon
+    plan: free
+    buildCommand: ./gradlew clean build -x test
+    startCommand: java -jar build/libs/collaboproject-be-0.0.1-SNAPSHOT.jar
+    envVars:
+      - key: JAVA_VERSION
+        value: 17
+      - key: SPRING_PROFILES_ACTIVE
+        value: prod
+      - key: TZ
+        value: Asia/Seoul
+      - key: REDIS_HOST
+        value: redis
+      - key: REDIS_PORT
+        value: 6379
+  - type: redis
+    name: redis
+    region: oregon
+    plan: free
+
+databases:
+  - name: cozy-postgres
+    plan: free
+    region: oregon

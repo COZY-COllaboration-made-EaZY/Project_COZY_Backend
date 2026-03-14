@@ -4,6 +4,8 @@ import com.ohgiraffers.COZYbe.common.BaseTimeEntity;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.time.LocalDateTime;
+
 @Entity
 @Getter
 @Setter
@@ -32,4 +34,10 @@ public class Help extends BaseTimeEntity {
 
     @Column(name = "status", nullable = false, length = 20)
     private String status;
+    @Column(name = "answer", columnDefinition = "TEXT")
+    private String answer;
+
+    @Column(name = "answered_at")
+    private LocalDateTime answeredAt;
+
 }

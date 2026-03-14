@@ -15,6 +15,7 @@ public record ProjectDetailResponse(
         String leaderName,
         String gitHubUrl,
         UUID teamId,
+        String teamName,
         UUID leaderId,
         UUID subLeaderId
 ) {}

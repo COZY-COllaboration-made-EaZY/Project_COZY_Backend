@@ -4,6 +4,7 @@ package com.ohgiraffers.COZYbe.domain.user.application.controller;
 import com.ohgiraffers.COZYbe.domain.auth.application.dto.LoginDTO;
 import com.ohgiraffers.COZYbe.domain.user.application.dto.SignUpDTO;
 import com.ohgiraffers.COZYbe.domain.user.application.dto.UserInfoDTO;
+import com.ohgiraffers.COZYbe.domain.user.application.dto.UserSettingsDTO;
 import com.ohgiraffers.COZYbe.domain.user.application.dto.UserUpdateDTO;
 import com.ohgiraffers.COZYbe.domain.user.application.dto.ValidDTO;
 import com.ohgiraffers.COZYbe.domain.user.application.service.UserAppService;
@@ -12,10 +13,12 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.Map;
 
@@ -63,6 +66,11 @@ public class UserController {
             @AuthenticationPrincipal Jwt jwt,
             @RequestBody LoginDTO loginDTO) {
 
+        if (jwt == null) {
+            throw new com.ohgiraffers.COZYbe.common.error.ApplicationException(
+                    com.ohgiraffers.COZYbe.common.error.ErrorCode.ANONYMOUS_USER
+            );
+        }
         Boolean isValid = userAppService.verifyPassword(jwt.getSubject(), loginDTO.getPassword());
         return ResponseEntity.ok().body(new ValidDTO(isValid));
 
@@ -75,13 +83,21 @@ public class UserController {
             @ApiResponse(responseCode = "404", description = "해당 유저는 존재하지 않습니다."),
             @ApiResponse(responseCode = "500", description = "예상치 못한 예러")
     })
-    @PostMapping("/update")
+    @PostMapping(value = "/update", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<?> updateUser(
             @AuthenticationPrincipal Jwt jwt,
-            @RequestBody UserUpdateDTO updateDTO
+            @RequestParam(required = false) String nickname,
+            @RequestParam(required = false) String statusMessage,
+            @RequestPart(value = "profileImage", required = false) MultipartFile profileImage
     ){
+        if (jwt == null) {
+            throw new com.ohgiraffers.COZYbe.common.error.ApplicationException(
+                    com.ohgiraffers.COZYbe.common.error.ErrorCode.ANONYMOUS_USER
+            );
+        }
         String userId = jwt.getSubject();
-        UserInfoDTO updated = userAppService.updateUser(userId, updateDTO);
+        UserUpdateDTO updateDTO = new UserUpdateDTO(nickname, statusMessage);
+        UserInfoDTO updated = userAppService.updateUser(userId, updateDTO, profileImage);
         return ResponseEntity.ok().body(updated);
     }
 
@@ -95,9 +111,55 @@ public class UserController {
     })
     @GetMapping("/check-current")
     public ResponseEntity<?> checkCurrentUser(@AuthenticationPrincipal Jwt jwt){
+        if (jwt == null) {
+            throw new com.ohgiraffers.COZYbe.common.error.ApplicationException(
+                    com.ohgiraffers.COZYbe.common.error.ErrorCode.ANONYMOUS_USER
+            );
+        }
         String sub = jwt.getSubject();
         UserInfoDTO userInfoDTO = userAppService.getUserInfo(sub);
         return ResponseEntity.ok(userInfoDTO);
+    }
+
+    @Operation(summary = "유저 설정 조회")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "성공적으로 처리 되었습니다."),
+            @ApiResponse(responseCode = "401", description = "로그인이 필요합니다."),
+            @ApiResponse(responseCode = "404", description = "해당 유저는 존재하지 않습니다."),
+            @ApiResponse(responseCode = "500", description = "예상치 못한 예러")
+    })
+    @GetMapping("/settings")
+    public ResponseEntity<?> getSettings(@AuthenticationPrincipal Jwt jwt) {
+        if (jwt == null) {
+            throw new com.ohgiraffers.COZYbe.common.error.ApplicationException(
+                    com.ohgiraffers.COZYbe.common.error.ErrorCode.ANONYMOUS_USER
+            );
+        }
+        String sub = jwt.getSubject();
+        UserSettingsDTO settings = userAppService.getUserSettings(sub);
+        return ResponseEntity.ok(settings);
+    }
+
+    @Operation(summary = "유저 설정 변경")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "성공적으로 처리 되었습니다."),
+            @ApiResponse(responseCode = "401", description = "로그인이 필요합니다."),
+            @ApiResponse(responseCode = "404", description = "해당 유저는 존재하지 않습니다."),
+            @ApiResponse(responseCode = "500", description = "예상치 못한 예러")
+    })
+    @PatchMapping("/settings")
+    public ResponseEntity<?> updateSettings(
+            @AuthenticationPrincipal Jwt jwt,
+            @RequestBody UserSettingsDTO settingsDTO
+    ) {
+        if (jwt == null) {
+            throw new com.ohgiraffers.COZYbe.common.error.ApplicationException(
+                    com.ohgiraffers.COZYbe.common.error.ErrorCode.ANONYMOUS_USER
+            );
+        }
+        String sub = jwt.getSubject();
+        UserSettingsDTO updated = userAppService.updateUserSettings(sub, settingsDTO);
+        return ResponseEntity.ok(updated);
     }
 
     @Operation(summary = "회원탈퇴")
@@ -109,6 +171,11 @@ public class UserController {
     })
     @DeleteMapping("/delete")
     public ResponseEntity<?> deleteAccount(@AuthenticationPrincipal Jwt jwt) {
+        if (jwt == null) {
+            throw new com.ohgiraffers.COZYbe.common.error.ApplicationException(
+                    com.ohgiraffers.COZYbe.common.error.ErrorCode.ANONYMOUS_USER
+            );
+        }
         userAppService.deleteUser(jwt.getSubject());
         return ResponseEntity.ok(Map.of("message", "회원탈퇴가 완료되었습니다."));
     }

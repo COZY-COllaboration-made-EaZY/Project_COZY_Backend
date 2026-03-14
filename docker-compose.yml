@@ -1,19 +1,17 @@
 services:
   app-db:
-    container_name: ${MYSQL_DATABASE}
-    image: mysql:8.0
-    command:
-      --collation-server=utf8mb4_0900_bin
-      --transaction-isolation=READ-COMMITTED
+    container_name: ${POSTGRES_DB}
+    image: postgres:16
     restart: always
     environment:
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
-      MYSQL_DATABASE: ${MYSQL_DATABASE}
-      MYSQL_USER: ${MYSQL_USER}
-      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       TZ: ${TZ}
     ports:
-      - "${MYSQL_PORT}:3306"
+      - "${POSTGRES_PORT}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
 
   redis:
     image: redis:latest
@@ -27,3 +25,4 @@ services:
 
 volumes:
   redis_data:
+  postgres_data:

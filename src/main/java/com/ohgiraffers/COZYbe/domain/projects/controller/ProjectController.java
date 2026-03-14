@@ -1,5 +1,6 @@
 package com.ohgiraffers.COZYbe.domain.projects.controller;
 import com.ohgiraffers.COZYbe.domain.projects.dto.CreateProjectDTO;
+import com.ohgiraffers.COZYbe.domain.projects.dto.DeleteProjectDTO;
 import com.ohgiraffers.COZYbe.domain.projects.dto.ProjectDetailResponse;
 import com.ohgiraffers.COZYbe.domain.projects.dto.ProjectListItemResponse;
 import com.ohgiraffers.COZYbe.domain.projects.dto.UpdateProjectDTO;
@@ -37,6 +38,11 @@ public class ProjectController {
     public ResponseEntity<?> createProject(
             @AuthenticationPrincipal Jwt jwt, @RequestBody CreateProjectDTO dto
     ) {
+        if (jwt == null) {
+            throw new com.ohgiraffers.COZYbe.common.error.ApplicationException(
+                    com.ohgiraffers.COZYbe.common.error.ErrorCode.ANONYMOUS_USER
+            );
+        }
         UUID currentUserId = UUID.fromString(jwt.getSubject());
         System.out.println("currentUserId :: " + currentUserId);
         Project project = projectService.createProject(dto, currentUserId);
@@ -49,8 +55,15 @@ public class ProjectController {
 
     // 팀의 프로젝트 리스트
     @GetMapping("/my-team-project-list")
-    public ResponseEntity<?> getMyProjectInfo(@RequestParam UUID teamId) {
-        List<ProjectListItemResponse> projects = projectService.getProjectsByTeamId(teamId);
+    public ResponseEntity<?> getMyProjectInfo(@RequestParam UUID teamId,
+                                              @AuthenticationPrincipal Jwt jwt) {
+        if (jwt == null) {
+            throw new com.ohgiraffers.COZYbe.common.error.ApplicationException(
+                    com.ohgiraffers.COZYbe.common.error.ErrorCode.ANONYMOUS_USER
+            );
+        }
+        UUID currentUserId = UUID.fromString(jwt.getSubject());
+        List<ProjectListItemResponse> projects = projectService.getProjectsByTeamId(teamId, currentUserId);
         return ResponseEntity.ok(Map.of(
                 "teamId", teamId,
                 "hasProject", !projects.isEmpty(),
@@ -61,17 +74,25 @@ public class ProjectController {
 
     // 프로젝트 상세
     @GetMapping("/project-detail-info")
-    public ResponseEntity<ProjectDetailResponse> getProjectDetailInfo(@RequestParam UUID projectId) {
+    public ResponseEntity<ProjectDetailResponse> getProjectDetailInfo(@RequestParam UUID projectId,
+                                                                      @AuthenticationPrincipal Jwt jwt) {
+        if (jwt == null) {
+            throw new com.ohgiraffers.COZYbe.common.error.ApplicationException(
+                    com.ohgiraffers.COZYbe.common.error.ErrorCode.ANONYMOUS_USER
+            );
+        }
+        UUID currentUserId = UUID.fromString(jwt.getSubject());
         System.out.println("projectId :: " + projectId);
-        ProjectDetailResponse dto = projectService.getProjectDetailInfo(projectId);
+        ProjectDetailResponse dto = projectService.getProjectDetailInfo(projectId, currentUserId);
         return ResponseEntity.ok(dto);
     }
 
     @DeleteMapping("/{projectId}")
     public ResponseEntity<Void> deleteProject(@PathVariable UUID projectId,
+                                              @RequestBody DeleteProjectDTO deleteDTO,
                                               @AuthenticationPrincipal Jwt jwt) {
         UUID currentUserId = UUID.fromString(jwt.getSubject());
-        projectService.deleteProject(projectId, currentUserId);
+        projectService.deleteProject(projectId, currentUserId, deleteDTO);
         return ResponseEntity.noContent().build();
     }
 
@@ -98,4 +119,3 @@ public class ProjectController {
 
 
 }
-

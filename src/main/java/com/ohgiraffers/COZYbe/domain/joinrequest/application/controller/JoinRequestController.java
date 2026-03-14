@@ -2,6 +2,7 @@ package com.ohgiraffers.COZYbe.domain.joinrequest.application.controller;
 
 
 import com.ohgiraffers.COZYbe.domain.joinrequest.application.dto.request.CreateJoinRequestDTO;
+import com.ohgiraffers.COZYbe.domain.joinrequest.application.dto.request.RejectJoinRequestDTO;
 import com.ohgiraffers.COZYbe.domain.joinrequest.application.dto.response.JoinRequestDTO;
 import com.ohgiraffers.COZYbe.domain.joinrequest.application.dto.response.JoinRequestListDTO;
 import com.ohgiraffers.COZYbe.domain.joinrequest.application.service.JoinRequestAppService;
@@ -93,8 +94,9 @@ public class JoinRequestController {
     @PatchMapping("/{requestId}/reject")
     public ResponseEntity<?> rejectRequest(
             @PathVariable String requestId,
+            @RequestBody RejectJoinRequestDTO rejectDTO,
             @AuthenticationPrincipal Jwt jwt) {
-        joinRequestAppService.rejectRequest(requestId, jwt.getSubject());
+        joinRequestAppService.rejectRequest(requestId, jwt.getSubject(), rejectDTO.reason());
         return ResponseEntity.ok().build();
     }
 

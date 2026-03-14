@@ -102,6 +102,14 @@ public class JoinRequestDomainService {
         return repository.save(updated);
     }
 
+    public JoinRequest updateStatusWithReason(JoinRequest joinRequest, RequestStatus status, String reason) {
+        JoinRequest updated = joinRequest.toBuilder()
+                .status(status)
+                .rejectReason(reason)
+                .build();
+        return repository.save(updated);
+    }
+
     // 요청 삭제
     public void deleteJoinRequest(JoinRequest joinRequest) {
         repository.delete(joinRequest);

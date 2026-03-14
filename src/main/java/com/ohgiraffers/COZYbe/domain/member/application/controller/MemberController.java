@@ -31,7 +31,12 @@ public class MemberController {
     @GetMapping("/list")
     public ResponseEntity<?> getMemberlist(TeamIdDTO teamIdDTO,
                            @AuthenticationPrincipal Jwt jwt){
-        MemberListDTO dto = service.getMemberList(teamIdDTO.teamId());
+        if (jwt == null) {
+            throw new com.ohgiraffers.COZYbe.common.error.ApplicationException(
+                    com.ohgiraffers.COZYbe.common.error.ErrorCode.ANONYMOUS_USER
+            );
+        }
+        MemberListDTO dto = service.getMemberList(teamIdDTO.teamId(), jwt.getSubject());
         return ResponseEntity.ok(dto);
     }
 

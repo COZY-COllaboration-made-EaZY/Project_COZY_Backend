@@ -52,7 +52,8 @@ public class SecurityConfig {
         CorsConfiguration config = new CorsConfiguration();
         config.setAllowedOrigins(Arrays.asList(
                 "http://localhost:3000",
-                "http://172.30.1.98:3000"
+                "http://172.30.1.98:3000",
+                "https://cozy-collaboration.vercel.app"
         ));
         // 개발용 와일드카드 (원하면 제거 가능)
         config.addAllowedOriginPattern("*");

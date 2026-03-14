@@ -15,6 +15,8 @@ public interface ProjectRepository extends JpaRepository<Project,UUID> {
 
     List<Project> findAllByTeam_TeamIdOrderByCreatedAtDesc(UUID teamId);
 
+    long countByTeam_TeamId(UUID teamId);
+
     @EntityGraph(attributePaths = {
             "team",
             "team.leader",
@@ -25,4 +27,3 @@ public interface ProjectRepository extends JpaRepository<Project,UUID> {
 
 
 }
-

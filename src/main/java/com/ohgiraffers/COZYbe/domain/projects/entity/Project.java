@@ -23,7 +23,7 @@ public class Project extends BaseTimeEntity {
 
     @Id
     @GeneratedValue
-    @Column(name="project_id", columnDefinition="BINARY(16)")
+    @Column(name="project_id")
     private UUID projectId;
 
     @Column(name = "projectName", nullable = false, unique = true, length = 100)

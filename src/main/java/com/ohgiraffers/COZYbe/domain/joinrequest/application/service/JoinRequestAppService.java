@@ -70,8 +70,7 @@ public class JoinRequestAppService {
      * 내가 보낸 요청 목록 조회
      */
     public JoinRequestListDTO getMyRequests(String userId) {
-        List<JoinRequest> requests = domainService.findByRequesterAndStatus(
-                userId, RequestStatus.PENDING);
+        List<JoinRequest> requests = domainService.findByRequester(userId);
         log.info("유저가 보낸 가입 요청 수 조회 : {}", requests.size());
         List<JoinRequestDTO> dtoList = mapper.entityListToDto(requests);
         return new JoinRequestListDTO(dtoList);
@@ -120,7 +119,7 @@ public class JoinRequestAppService {
      * 가입 요청 거부 (리더/서브리더만)
      */
     @Transactional
-    public void rejectRequest(String requestId, String userId) {
+    public void rejectRequest(String requestId, String userId, String reason) {
         JoinRequest joinRequest = domainService.getJoinRequest(requestId);
 
         // 리더/서브리더 권한 확인
@@ -131,8 +130,13 @@ public class JoinRequestAppService {
             throw new ApplicationException(ErrorCode.REQUEST_ALREADY_PROCESSED);
         }
 
+        String trimmed = reason == null ? "" : reason.trim();
+        if (trimmed.isEmpty() || trimmed.length() > 200) {
+            throw new ApplicationException(ErrorCode.INVALID_REJECT_REASON);
+        }
+
         // 상태 업데이트
-        domainService.updateStatus(joinRequest, RequestStatus.REJECTED);
+        domainService.updateStatusWithReason(joinRequest, RequestStatus.REJECTED, trimmed);
 
         log.info("가입 요청 거부됨: {} -> {}",
                 joinRequest.getRequester().getNickname(),

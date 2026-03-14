@@ -22,6 +22,7 @@ public interface JoinRequestRepository extends JpaRepository<JoinRequest, UUID> 
 
     // 팀에 온 특정 상태의 요청 조회
     Optional<List<JoinRequest>> findByTeam_TeamIdAndStatus(UUID teamId, RequestStatus status);
+    long countByTeam_TeamIdAndStatus(UUID teamId, RequestStatus status);
 
     // 사용자가 특정 팀에 보낸 특정 상태의 요청 조회 (중복 체크용)
     Optional<JoinRequest> findByRequester_UserIdAndTeam_TeamIdAndStatus(UUID userId, UUID teamId, RequestStatus status);
