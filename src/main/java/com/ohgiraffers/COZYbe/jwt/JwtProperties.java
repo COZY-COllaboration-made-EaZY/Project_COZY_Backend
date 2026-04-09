@@ -17,15 +17,15 @@ public class JwtProperties {
 
     private String secret;
 
-    public Long getAccessExpiration(){
+    public Long getAccessTokenExpirationMillis(){
         return accessTokenExpiration.toMillis();
     }
 
-    public Long getRefreshExpiration(){
+    public Long getRefreshTokenExpirationMillis(){
         return refreshTokenExpiration.toMillis();
     }
 
-    public Duration getRefreshDuration(){
+    public Duration getRefreshTokenDuration(){
         return this.refreshTokenExpiration;
     }
 
