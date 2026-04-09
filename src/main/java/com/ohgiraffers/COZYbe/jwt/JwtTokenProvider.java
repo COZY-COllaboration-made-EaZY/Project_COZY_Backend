@@ -44,7 +44,7 @@ public class JwtTokenProvider {
                 .subject(userInfo.userId().toString())
                 .audience().add("COZY CLIENT").and()
                 .issuedAt(Date.from(now))
-                .expiration(Date.from(now.plusMillis(properties.getAccessExpiration())))
+                .expiration(Date.from(now.plusMillis(properties.getAccessTokenExpirationMillis())))
                 .claims(userInfo.toMap())
                 .signWith(properties.getKey())
                 .compact();
@@ -61,7 +61,7 @@ public class JwtTokenProvider {
                 .subject(userId)
                 .audience().add("COZY CLIENT").and()
                 .issuedAt(Date.from(now))
-                .expiration(Date.from(now.plusMillis(properties.getRefreshExpiration())))
+                .expiration(Date.from(now.plusMillis(properties.getRefreshTokenExpirationMillis())))
                 .signWith(properties.getKey())
                 .claim("deviceId", deviceId)
                 .compact();
@@ -77,7 +77,7 @@ public class JwtTokenProvider {
                 .secure(true)
                 .sameSite("Strict")
                 .path("/")
-                .maxAge(properties.getRefreshDuration())
+                .maxAge(properties.getRefreshTokenDuration())
                 .build();
     }
 

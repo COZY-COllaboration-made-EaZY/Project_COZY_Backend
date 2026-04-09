@@ -47,8 +47,8 @@ spring:
 
 jwt:
   secret: ${JWT_SECRET}
-  access-token-expiration: ${JWT_ACCESS_EXPIRATION}
-  refresh-token-expiration: ${JWT_REFRESH_EXPIRATION}
+  access-token-expiration: ${JWT_ACCESS_TOKEN_EXPIRATION:${JWT_ACCESS_EXPIRATION:}}
+  refresh-token-expiration: ${JWT_REFRESH_TOKEN_EXPIRATION:${JWT_REFRESH_EXPIRATION:}}
 
 springdoc:
   swagger-ui:
