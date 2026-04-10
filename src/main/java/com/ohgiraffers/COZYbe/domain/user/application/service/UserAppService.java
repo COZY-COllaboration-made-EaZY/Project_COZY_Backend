@@ -51,14 +51,14 @@ public class UserAppService {
                 .build();
 
         User registered = userDomainService.saveUser(user);
-        return userMapper.EntityToInfoDTO(registered);
+        return toUserInfoDTO(registered);
     }
 
 
 
     public UserInfoDTO getUserInfo(String userId) {
         User user = userDomainService.getUser(userId);
-        return userMapper.EntityToInfoDTO(user);
+        return toUserInfoDTO(user);
     }
 
     public UserSettingsDTO getUserSettings(String userId) {
@@ -106,7 +106,7 @@ public class UserAppService {
                 log.error("프로필 이미지 저장 실패", e);
             }
         }
-        return userMapper.EntityToInfoDTO(exist);
+        return toUserInfoDTO(exist);
     }
 
     @Transactional
@@ -175,5 +175,28 @@ public class UserAppService {
         if (Boolean.TRUE.equals(user.getBlocked())) {
             throw new ApplicationException(ErrorCode.NOT_ALLOWED);
         }
+    }
+
+    private UserInfoDTO toUserInfoDTO(User user) {
+        UserInfoDTO dto = userMapper.EntityToInfoDTO(user);
+        String profileKeyOrUrl = user.getProfileImageUrl();
+        String presigned = fileService.getProfileImageUrl(profileKeyOrUrl);
+        if (presigned == null) {
+            presigned = fileService.getProfileImageUrl(fileService.getDefaultProfileImageDir());
+        }
+        return new UserInfoDTO(
+                dto.userId(),
+                dto.email(),
+                dto.nickname(),
+                presigned,
+                dto.statusMessage(),
+                dto.role(),
+                dto.themeMode(),
+                dto.notificationsEmail(),
+                dto.notificationsPush(),
+                dto.digestWeekly(),
+                dto.profileVisible(),
+                dto.locale()
+        );
     }
 }

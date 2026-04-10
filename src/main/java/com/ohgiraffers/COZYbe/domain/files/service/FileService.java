@@ -3,21 +3,33 @@ package com.ohgiraffers.COZYbe.domain.files.service;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.File;
+import org.springframework.beans.factory.annotation.Value;
+
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
-import java.util.UUID;
 
 @Service
 public class FileService {
 
-    private static final String UPLOAD_DIR = "uploads/profile_images";
-    private static final String DEFAULT_IMAGE_DIR = "profile_images/Default_Profile.png";
+    private static final String FALLBACK_DEFAULT_IMAGE_KEY = "profile_images/Default_Profile.png";
+
+    private final S3Service s3Service;
+
+    @Value("${app.profile.default-image-key:" + FALLBACK_DEFAULT_IMAGE_KEY + "}")
+    private String defaultProfileImageKey;
+
+    public FileService(S3Service s3Service) {
+        this.s3Service = s3Service;
+    }
 
     public String getDefaultProfileImageDir(){
-        return DEFAULT_IMAGE_DIR;
+        return defaultProfileImageKey;
+    }
+
+    public String getProfileImageUrl(String keyOrUrl) {
+        if (keyOrUrl == null || keyOrUrl.isBlank()) {
+            return null;
+        }
+        return s3Service.getPresignedUrl(keyOrUrl);
     }
 
 //    public String saveProfileImage(MultipartFile file) throws IOException {
@@ -40,24 +52,11 @@ public class FileService {
 //    }
 
 
-    // 프로필 이미지 저장
+    // 프로필 이미지 저장 (S3 업로드)
     public String saveProfileImage(MultipartFile file) throws IOException {
-        File uploadDir = new File(UPLOAD_DIR);
-        if (!uploadDir.exists()) {
-            uploadDir.mkdirs();
+        if (file == null || file.isEmpty()) {
+            return null;
         }
-
-        String originalFileName = file.getOriginalFilename();
-        if (originalFileName == null) {
-            throw new IllegalArgumentException("파일 이름이 존재하지 않습니다.");
-        }
-
-        String fileExtension = originalFileName.substring(originalFileName.lastIndexOf("."));
-        String newFileName = UUID.randomUUID() + fileExtension;
-
-        Path filePath = Path.of(UPLOAD_DIR, newFileName);
-        Files.copy(file.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
-
-        return "profile_images/" + newFileName;
+        return s3Service.upload(file);
     }
 }
