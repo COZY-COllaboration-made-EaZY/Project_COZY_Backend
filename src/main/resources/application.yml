@@ -65,3 +65,19 @@ logging:
     org.hibernate.orm.connections.pooling: error  # ← "Database info:" 여기서 나옵니다
     com.zaxxer.hikari: error                      # HikariCP 시작/연결 로그 숨김
     org.springframework.boot.autoconfigure.orm.jpa: error # open-in-view 경고 숨김
+
+cloud:
+  aws:
+    credentials:
+      access-key: ${AWS_ACCESS_KEY_ID}
+      secret-key: ${AWS_SECRET_ACCESS_KEY}
+    region:
+      static: ${AWS_REGION}
+    s3:
+      bucket: ${AWS_S3_BUCKET}
+
+app:
+  profile:
+    default-image-key: ${DEFAULT_PROFILE_IMAGE_KEY:profile_images/Default_Profile.png}
+  s3:
+    presign-exp-minutes: ${S3_PRESIGN_EXP_MINUTES:60}

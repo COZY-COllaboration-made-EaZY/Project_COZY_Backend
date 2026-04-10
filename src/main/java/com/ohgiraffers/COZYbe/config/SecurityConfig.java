@@ -55,9 +55,6 @@ public class SecurityConfig {
                 "http://172.30.1.98:3000",
                 "https://cozy-collaboration.vercel.app"
         ));
-        // 개발용 와일드카드 (원하면 제거 가능)
-        config.addAllowedOriginPattern("*");
-
         config.setAllowedMethods(Arrays.asList("GET", "POST", "PATCH", "PUT", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type"));
         config.setAllowCredentials(true);
